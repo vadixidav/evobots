@@ -1,0 +1,14 @@
+[package]
+name = "evobots"
+version = "0.0.0"
+authors = ["Geordon Worley <vadixidav@gmail.com>"]
+
+[dependencies]
+rand = "0.3.13"
+num = "0.1.30"
+zoom = "1.1.0"
+glowygraph = "0.3.0"
+nalgebra = "0.5.1"
+crossbeam = "0.2.5"
+glium = "0.13.5"
+mli = {git = "https://github.com/vadixidav/mli"}
