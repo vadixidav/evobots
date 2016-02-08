@@ -2,7 +2,7 @@
 name = "evobots"
 version = "0.0.0"
 dependencies = [
- "crossbeam 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "crossbeam 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium 0.13.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "glowygraph 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mli 0.6.0 (git+https://github.com/vadixidav/mli)",
@@ -122,7 +122,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "crossbeam"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
