@@ -43,7 +43,9 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
 }
 
 fn mutator(ins: &mut Ins, rng: &mut R) {
-
+    use std::mem;
+    use rand::Rng;
+    *ins = unsafe{mem::transmute(rng.gen_range::<u8>(0, 9))};
 }
 
 #[derive(Clone)]
