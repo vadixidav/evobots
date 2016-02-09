@@ -1,7 +1,34 @@
 extern crate mli;
 extern crate rand;
+use rand::Rng;
 
 type R = rand::isaac::Isaac64Rng;
+
+mod botbrain {
+    pub static TOTAL_INPUTS: usize = 5;
+    pub static TOTAL_OUTPUTS: usize = 5;
+    pub static DEFAULT_MUTATE_SIZE: usize = 30;
+    pub static DEFAULT_CROSSOVER_POINTS: usize = 1;
+    pub static DEFAULT_INSTRUCTIONS: usize = 64;
+}
+
+mod nodebrain {
+    pub static TOTAL_INPUTS: usize = 5;
+    pub static TOTAL_OUTPUTS: usize = 5;
+    pub static DEFAULT_MUTATE_SIZE: usize = 30;
+    pub static DEFAULT_CROSSOVER_POINTS: usize = 1;
+    pub static DEFAULT_INSTRUCTIONS: usize = 64;
+}
+
+mod finalbrain {
+    pub static TOTAL_INPUTS: usize = 5;
+    pub static TOTAL_OUTPUTS: usize = 5;
+    pub static DEFAULT_MUTATE_SIZE: usize = 30;
+    pub static DEFAULT_CROSSOVER_POINTS: usize = 1;
+    pub static DEFAULT_INSTRUCTIONS: usize = 64;
+}
+
+static DEFAULT_FOOD: i64 = 16384;
 
 #[derive(Clone)]
 enum Ins {
@@ -44,12 +71,45 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
 
 fn mutator(ins: &mut Ins, rng: &mut R) {
     use std::mem;
-    use rand::Rng;
     *ins = unsafe{mem::transmute(rng.gen_range::<u8>(0, 9))};
 }
 
 #[derive(Clone)]
 struct Bot {
-    brain: mli::Mep<Ins, rand::isaac::Isaac64Rng, i64,
-        fn(&mut Ins, &mut R), fn(&Ins, i64, i64)>,
+    botBrain: mli::Mep<Ins, rand::isaac::Isaac64Rng, i64,
+        fn(&mut Ins, &mut R), fn(&Ins, i64, i64) -> i64>,
+    nodeBrain: mli::Mep<Ins, rand::isaac::Isaac64Rng, i64,
+        fn(&mut Ins, &mut R), fn(&Ins, i64, i64) -> i64>,
+    finalBrain: mli::Mep<Ins, rand::isaac::Isaac64Rng, i64,
+        fn(&mut Ins, &mut R), fn(&Ins, i64, i64) -> i64>,
+    food: i64,
+}
+
+impl Bot {
+    fn new(rng: &mut R) -> Self {
+        let bvec = (0..botbrain::DEFAULT_INSTRUCTIONS).map(|_| {let mut ins = Ins::ADD; mutator(&mut ins, rng); ins})
+            .collect::<Vec<_>>();
+        let nvec = (0..nodebrain::DEFAULT_INSTRUCTIONS).map(|_| {let mut ins = Ins::ADD; mutator(&mut ins, rng); ins})
+            .collect::<Vec<_>>();
+        let fvec = (0..finalbrain::DEFAULT_INSTRUCTIONS).map(|_| {let mut ins = Ins::ADD; mutator(&mut ins, rng); ins})
+            .collect::<Vec<_>>();
+        Bot {
+            botBrain: mli::Mep::new(botbrain::TOTAL_INPUTS, botbrain::TOTAL_OUTPUTS,
+                botbrain::DEFAULT_MUTATE_SIZE, botbrain::DEFAULT_CROSSOVER_POINTS, rng,
+                bvec.into_iter(),
+                mutator, processor),
+
+            nodeBrain: mli::Mep::new(nodebrain::TOTAL_INPUTS, nodebrain::TOTAL_OUTPUTS,
+                nodebrain::DEFAULT_MUTATE_SIZE, nodebrain::DEFAULT_CROSSOVER_POINTS, rng,
+                nvec.into_iter(),
+                mutator, processor),
+
+            finalBrain: mli::Mep::new(finalbrain::TOTAL_INPUTS, finalbrain::TOTAL_OUTPUTS,
+                finalbrain::DEFAULT_MUTATE_SIZE, finalbrain::DEFAULT_CROSSOVER_POINTS, rng,
+                fvec.into_iter(),
+                mutator, processor),
+
+            food: DEFAULT_FOOD,
+        }
+    }
 }
