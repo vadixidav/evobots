@@ -11,4 +11,5 @@ glowygraph = "0.3.0"
 nalgebra = "0.5.1"
 crossbeam = "0.2.5"
 glium = "0.13.5"
+petgraph = "0.2.2"
 mli = {git = "https://github.com/vadixidav/mli"}
