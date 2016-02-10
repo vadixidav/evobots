@@ -69,9 +69,16 @@ fn main() {
 
             //Apply spring forces to keep them together
             zoom::hooke(&nodes.0.particle, &nodes.1.particle, 0.001);
+        }
 
-            //Apply repulsion forces to keep them from being too close
-            zoom::gravitate_radius(&nodes.0.particle, &nodes.1.particle, -0.003);
+        {
+            let nodes = deps.raw_nodes();
+            for i in 0..nodes.len() {
+                for j in (i+1)..nodes.len() {
+                    //Apply repulsion forces to keep them from being too close
+                    zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle, -0.003);
+                }
+            }
         }
 
         //Update nodes
