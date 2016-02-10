@@ -6,6 +6,8 @@ extern crate nalgebra as na;
 extern crate zoom;
 extern crate rand;
 
+const SEPARATION_MAGNITUDE: f64 = 0.1;
+
 use na::{ToHomogeneous, Translation, Rotation};
 use num::traits::One;
 
@@ -23,18 +25,17 @@ fn vec_to_spos(v: Vec3) -> [f32; 3] {
 }
 
 fn main() {
-    let mut rng = rand::Isaac64Rng::from_seed([1, 2, 3, 4]);
-
     use glium::DisplayBuild;
+    use rand::{SeedableRng, Rng};
+    let mut rng = rand::Isaac64Rng::from_seed(&[1, 2, 3, 4]);
+
     let display = glium::glutin::WindowBuilder::new().with_vsync().build_glium().unwrap();
     let window = display.get_window().unwrap();
     //window.set_cursor_state(glium::glutin::CursorState::Hide).ok().unwrap();
     let glowy = gg::Renderer::new(&display);
 
     let mut deps = petgraph::Graph::<Node, bool>::new();
-    let nodes = [
-        deps.add_node(Node::new(5000, zoom::BasicParticle::default())),
-    ];
+    deps.add_node(Node::new(5000, zoom::BasicParticle::default()));
 
     //Set mouse cursor to middle
     {
@@ -61,13 +62,60 @@ fn main() {
 
         let matr = movement.to_homogeneous() * 3.0;
 
-        //Update nodes
-        for n in deps.node_weights_mut() {
-            n.advance();
+        //Update forces between nodes
+        for i in deps.edge_indices() {
+            let node_indices = deps.edge_endpoints(i).unwrap();
+            let nodes = deps.index_twice_mut(node_indices.0, node_indices.1);
+            zoom::hooke(
+                &nodes.0.particle,
+                &nodes.1.particle,
+                0.001
+            );
+        }
 
-            if n.should_split() {
-                let phi = 
+        //Update nodes
+        for i in deps.node_indices() {
+            if deps.node_weight(i).unwrap().should_split() {
+                use std::f64::consts::PI;
+                use num::traits::Float;
+                let theta = rng.gen_range(0.0, 2.0 * PI);
+                let phi = rng.gen_range(-1.0, 1.0).acos();
+                let rand_unit_dir = Vec3::new(
+                    theta.cos() * phi.sin(),
+                    theta.sin() * phi.sin(),
+                    phi.cos(),
+                );
+
+                //Divide energy in half before splitting
+                deps.node_weight_mut(i).unwrap().energy /= 2;
+
+                //Destroy all bots in node
+                deps.node_weight_mut(i).unwrap().bots.clear();
+
+                let nnode = {
+                    let nref = deps.node_weight(i).unwrap();
+                    Node::new(
+                        nref.energy,
+                        nref.particle.clone(),
+                    )
+                };
+
+                let newindex = deps.add_node(nnode);
+
+                deps.add_edge(i, newindex, false);
+
+                //Add a positive impulse to this particle
+                deps.node_weight_mut(i).unwrap().particle.velocity =
+                    deps.node_weight_mut(i).unwrap().particle.velocity +
+                    rand_unit_dir * SEPARATION_MAGNITUDE;
+
+                //Add a negative impulse to the other particle
+                deps.node_weight_mut(newindex).unwrap().particle.velocity =
+                    deps.node_weight_mut(newindex).unwrap().particle.velocity -
+                    rand_unit_dir * SEPARATION_MAGNITUDE;
             }
+
+            deps.node_weight_mut(i).unwrap().advance();
         }
 
         //Render nodes
@@ -87,14 +135,15 @@ fn main() {
             &perspective,
             &deps.edge_indices().map(|e| deps.edge_endpoints(e)).flat_map(|n| {
                     let indices = n.unwrap().clone();
+                    let nodes = (deps.node_weight(indices.0).unwrap(), deps.node_weight(indices.1).unwrap());
                     std::iter::once(gg::Node{
-                        position: vec_to_spos(deps.node_weight(indices.0).unwrap().particle.position),
-                        color: [0.0, 1.0, 0.0, 1.0],
+                        position: vec_to_spos(nodes.0.particle.position),
+                        color: nodes.0.color(),
                         falloff: 0.25
                     }).chain(
                     std::iter::once(gg::Node{
-                        position: vec_to_spos(deps.node_weight(indices.1).unwrap().particle.position),
-                        color: [0.0, 0.0, 1.0, 1.0],
+                        position: vec_to_spos(nodes.1.particle.position),
+                        color: nodes.1.color(),
                         falloff: 0.25
                     }))
                 }
