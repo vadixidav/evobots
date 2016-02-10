@@ -66,11 +66,12 @@ fn main() {
         for i in deps.edge_indices() {
             let node_indices = deps.edge_endpoints(i).unwrap();
             let nodes = deps.index_twice_mut(node_indices.0, node_indices.1);
-            zoom::hooke(
-                &nodes.0.particle,
-                &nodes.1.particle,
-                0.001
-            );
+
+            //Apply spring forces to keep them together
+            zoom::hooke(&nodes.0.particle, &nodes.1.particle, 0.001);
+
+            //Apply repulsion forces to keep them from being too close
+            zoom::gravitate_radius(&nodes.0.particle, &nodes.1.particle, -0.003);
         }
 
         //Update nodes
@@ -96,7 +97,7 @@ fn main() {
                     let nref = deps.node_weight(i).unwrap();
                     Node::new(
                         nref.energy,
-                        nref.particle.clone(),
+                        nref.particle.p.clone(),
                     )
                 };
 
@@ -105,13 +106,13 @@ fn main() {
                 deps.add_edge(i, newindex, false);
 
                 //Add a positive impulse to this particle
-                deps.node_weight_mut(i).unwrap().particle.velocity =
-                    deps.node_weight_mut(i).unwrap().particle.velocity +
+                deps.node_weight_mut(i).unwrap().particle.p.velocity =
+                    deps.node_weight_mut(i).unwrap().particle.p.velocity +
                     rand_unit_dir * SEPARATION_MAGNITUDE;
 
                 //Add a negative impulse to the other particle
-                deps.node_weight_mut(newindex).unwrap().particle.velocity =
-                    deps.node_weight_mut(newindex).unwrap().particle.velocity -
+                deps.node_weight_mut(newindex).unwrap().particle.p.velocity =
+                    deps.node_weight_mut(newindex).unwrap().particle.p.velocity -
                     rand_unit_dir * SEPARATION_MAGNITUDE;
             }
 
@@ -122,8 +123,8 @@ fn main() {
         glowy.render_nodes(&mut target, matr.as_ref(), &perspective,
             &deps.node_weights_mut().map(|n|
                 gg::Node{
-                    position: vec_to_spos(n.particle.position),
-                    color: [n.energy as f32 / ENERGY_THRESHOLD as f32, 0.0, 0.0, 1.0],
+                    position: vec_to_spos(n.particle.p.position),
+                    color: n.color(),
                     falloff: 0.25,
                 }
             ).collect::<Vec<_>>()[..]);
@@ -137,12 +138,12 @@ fn main() {
                     let indices = n.unwrap().clone();
                     let nodes = (deps.node_weight(indices.0).unwrap(), deps.node_weight(indices.1).unwrap());
                     std::iter::once(gg::Node{
-                        position: vec_to_spos(nodes.0.particle.position),
+                        position: vec_to_spos(nodes.0.particle.p.position),
                         color: nodes.0.color(),
                         falloff: 0.25
                     }).chain(
                     std::iter::once(gg::Node{
-                        position: vec_to_spos(nodes.1.particle.position),
+                        position: vec_to_spos(nodes.1.particle.p.position),
                         color: nodes.1.color(),
                         falloff: 0.25
                     }))
