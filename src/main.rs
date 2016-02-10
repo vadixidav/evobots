@@ -76,7 +76,7 @@ fn main() {
             for i in 0..nodes.len() {
                 for j in (i+1)..nodes.len() {
                     //Apply repulsion forces to keep them from being too close
-                    zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle, -0.003);
+                    zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle, -0.001);
                 }
             }
         }
@@ -121,6 +121,10 @@ fn main() {
                 deps.node_weight_mut(newindex).unwrap().particle.p.velocity =
                     deps.node_weight_mut(newindex).unwrap().particle.p.velocity -
                     rand_unit_dir * SEPARATION_MAGNITUDE;
+            }
+
+            {
+                //for 
             }
 
             deps.node_weight_mut(i).unwrap().advance();

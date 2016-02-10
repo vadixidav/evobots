@@ -4,7 +4,7 @@ use super::bot::*;
 use super::Vec3;
 use self::zoom::*;
 
-static ENERGY_RATIO: f64 = 0.01;
+static ENERGY_RATIO: f64 = 0.003;
 pub static ENERGY_THRESHOLD: i64 = 500000;
 
 static DRAG: f64 = 0.1;

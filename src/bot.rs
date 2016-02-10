@@ -14,7 +14,7 @@ mod botbrain {
 
 mod nodebrain {
     pub static TOTAL_INPUTS: usize = 5;
-    pub static TOTAL_OUTPUTS: usize = 5;
+    pub static TOTAL_OUTPUTS: usize = 4;
     pub static DEFAULT_MUTATE_SIZE: usize = 30;
     pub static DEFAULT_CROSSOVER_POINTS: usize = 1;
     pub static DEFAULT_INSTRUCTIONS: usize = 64;
@@ -80,6 +80,7 @@ pub struct Bot {
     pub node_brain: mli::Mep<Ins, R, i64, fn(&mut Ins, &mut R), fn(&Ins, i64, i64) -> i64>,
     pub final_brain: mli::Mep<Ins, R, i64, fn(&mut Ins, &mut R), fn(&Ins, i64, i64) -> i64>,
     pub energy: i64,
+    pub signal: i64,
 }
 
 impl Bot {
@@ -116,6 +117,8 @@ impl Bot {
                 mutator, processor),
 
             energy: DEFAULT_FOOD,
+
+            signal: 0,
         }
     }
 }
