@@ -15,6 +15,8 @@ mod bot;
 use bot::*;
 mod node;
 use node::*;
+mod rank;
+use rank::*;
 
 pub type Vec3 = na::Vec3<f64>;
 
@@ -34,7 +36,7 @@ fn main() {
     //window.set_cursor_state(glium::glutin::CursorState::Hide).ok().unwrap();
     let glowy = gg::Renderer::new(&display);
 
-    let mut deps = petgraph::Graph::<Node, bool>::new();
+    let mut deps = petgraph::Graph::<Node, bool, petgraph::Undirected>::new_undirected();
     deps.add_node(Node::new(5000, zoom::BasicParticle::default()));
 
     //Set mouse cursor to middle
@@ -123,11 +125,27 @@ fn main() {
                     rand_unit_dir * SEPARATION_MAGNITUDE;
             }
 
-            {
-                //for 
-            }
-
             deps.node_weight_mut(i).unwrap().advance();
+        }
+
+        //Update bots in nodes
+        for i in deps.node_indices() {
+            //The current node is always 0; everything else comes after in no particular order
+            let neighbors = std::iter::once(i).chain(deps.neighbors(i)).collect::<Vec<_>>();
+
+            //Iterate through all bots (b) in the node being processed
+            for b in deps.node_weight(i).unwrap().bots.iter() {
+                use std::collections::BinaryHeap;
+                //Create a BTree to rank the nodes
+                let mut map: BinaryHeap<Rank> = BinaryHeap::from(
+                        vec![Rank{rank: 0, outputs: [-1; bot::nodebrain::TOTAL_OUTPUTS]}; bot::finalbrain::TOTAL_NODE_INPUTS]
+                );
+
+                //Iterate through each node and produce the outputs
+                for (i, n) in neighbors.iter().enumerate() {
+                    
+                }
+            }
         }
 
         //Render nodes

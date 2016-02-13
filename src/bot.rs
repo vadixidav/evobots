@@ -4,28 +4,38 @@ use self::rand::Rng;
 
 pub type R = rand::isaac::Isaac64Rng;
 
-mod botbrain {
-    pub static TOTAL_INPUTS: usize = 5;
-    pub static TOTAL_OUTPUTS: usize = 5;
-    pub static DEFAULT_MUTATE_SIZE: usize = 30;
-    pub static DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub static DEFAULT_INSTRUCTIONS: usize = 64;
+pub mod botbrain {
+    //Node energy, bot count, self energy, bot energy, bot signal, and memory are inputs.
+    pub const TOTAL_INPUTS: usize = 5 + super::finalbrain::TOTAL_MEMORY;
+    pub const TOTAL_OUTPUTS: usize = 5;
+    pub const DEFAULT_MUTATE_SIZE: usize = 30;
+    pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
+    pub const DEFAULT_INSTRUCTIONS: usize = 64;
 }
 
-mod nodebrain {
-    pub static TOTAL_INPUTS: usize = 5;
-    pub static TOTAL_OUTPUTS: usize = 4;
-    pub static DEFAULT_MUTATE_SIZE: usize = 30;
-    pub static DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub static DEFAULT_INSTRUCTIONS: usize = 64;
+pub mod nodebrain {
+    //Node energy, bot count, present node bot count, self energy, and memory are inputs.
+    pub const TOTAL_INPUTS: usize = 4 + super::finalbrain::TOTAL_MEMORY;
+    pub const TOTAL_OUTPUTS: usize = 5;
+    pub const DEFAULT_MUTATE_SIZE: usize = 30;
+    pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
+    pub const DEFAULT_INSTRUCTIONS: usize = 64;
 }
 
-mod finalbrain {
-    pub static TOTAL_INPUTS: usize = 5;
-    pub static TOTAL_OUTPUTS: usize = 5;
-    pub static DEFAULT_MUTATE_SIZE: usize = 30;
-    pub static DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub static DEFAULT_INSTRUCTIONS: usize = 64;
+pub mod finalbrain {
+    pub const TOTAL_BOT_INPUTS: usize = 4;
+    pub const TOTAL_NODE_INPUTS: usize = 4;
+    pub const TOTAL_MEMORY: usize = 4;
+    //Present node energy, bot count, self energy, and memory are inputs
+    pub const TOTAL_INPUTS: usize = 3 + TOTAL_MEMORY +
+        //Add inputs for all the node brains
+        TOTAL_NODE_INPUTS * super::nodebrain::TOTAL_OUTPUTS +
+        //Add inputs for all the bot brains
+        TOTAL_BOT_INPUTS * super::botbrain::TOTAL_OUTPUTS;
+    pub const TOTAL_OUTPUTS: usize = 5;
+    pub const DEFAULT_MUTATE_SIZE: usize = 30;
+    pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
+    pub const DEFAULT_INSTRUCTIONS: usize = 64;
 }
 
 static DEFAULT_FOOD: i64 = 16384;
@@ -81,6 +91,7 @@ pub struct Bot {
     pub final_brain: mli::Mep<Ins, R, i64, fn(&mut Ins, &mut R), fn(&Ins, i64, i64) -> i64>,
     pub energy: i64,
     pub signal: i64,
+    memory: [i64; finalbrain::TOTAL_MEMORY],
 }
 
 impl Bot {
@@ -119,6 +130,8 @@ impl Bot {
             energy: DEFAULT_FOOD,
 
             signal: 0,
+
+            memory: [0; finalbrain::TOTAL_MEMORY],
         }
     }
 }
