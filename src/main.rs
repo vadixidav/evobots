@@ -128,22 +128,31 @@ fn main() {
             deps.node_weight_mut(i).unwrap().advance();
         }
 
+        //Make arrays for bot brain inputs
+        let mut node_inputs = [0i64; nodebrain::TOTAL_INPUTS];
+        let mut bot_inputs = [0i64; botbrain::TOTAL_INPUTS];
+        let mut final_inputs = [0i64; finalbrain::TOTAL_INPUTS];
+
         //Update bots in nodes
         for i in deps.node_indices() {
+            let pnode = deps.node_weight_mut(i).unwrap();
             //The current node is always 0; everything else comes after in no particular order
             let neighbors = std::iter::once(i).chain(deps.neighbors(i)).collect::<Vec<_>>();
 
             //Iterate through all bots (b) in the node being processed
-            for b in deps.node_weight(i).unwrap().bots.iter() {
+            for b in deps.node_weight_mut(i).unwrap().bots.iter_mut() {
                 use std::collections::BinaryHeap;
-                //Create a BTree to rank the nodes
-                let mut map: BinaryHeap<Rank> = BinaryHeap::from(
-                        vec![Rank{rank: 0, outputs: [-1; bot::nodebrain::TOTAL_OUTPUTS]}; bot::finalbrain::TOTAL_NODE_INPUTS]
+                //Create a BTree to rank the nodes and fill it with default nodes
+                let mut map = BinaryHeap::from(
+                    vec![Rank{rank: 0, data: [-1; nodebrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_NODE_INPUTS]
                 );
 
                 //Iterate through each node and produce the outputs
-                for (i, n) in neighbors.iter().enumerate() {
-                    
+                for (i, &n) in neighbors.iter().enumerate() {
+                    //Get the node reference
+                    let n = deps.node_weight(n).unwrap();
+                    //Set the inputs for the node brain
+                    node_inputs[0] = n.energy;
                 }
             }
         }

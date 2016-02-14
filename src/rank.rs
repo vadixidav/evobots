@@ -1,12 +1,14 @@
 use std::cmp::Ordering;
 
+///Rank lets us rank multiple objects ignoring the data.
+///The Ord for Rank is backwards so that BinaryHeap becomes a min heap.
 #[derive(Clone)]
-pub struct Rank {
+pub struct Rank<T> {
     pub rank: i64,
-    pub outputs: [i64; super::bot::nodebrain::TOTAL_OUTPUTS],
+    pub data: T,
 }
 
-impl PartialEq for Rank {
+impl<T> PartialEq for Rank<T> {
     fn eq(&self, other: &Self) -> bool {
         self.rank == other.rank
     }
@@ -16,38 +18,38 @@ impl PartialEq for Rank {
     }
 }
 
-impl Eq for Rank {}
+impl<T> Eq for Rank<T> {}
 
-impl PartialOrd for Rank {
+impl<T> PartialOrd for Rank<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 
     fn lt(&self, other: &Self) -> bool {
-        self.rank < other.rank
-    }
-
-    fn le(&self, other: &Self) -> bool {
-        self.rank <= other.rank
-    }
-
-    fn gt(&self, other: &Self) -> bool {
         self.rank > other.rank
     }
 
-    fn ge(&self, other: &Self) -> bool {
+    fn le(&self, other: &Self) -> bool {
         self.rank >= other.rank
+    }
+
+    fn gt(&self, other: &Self) -> bool {
+        self.rank < other.rank
+    }
+
+    fn ge(&self, other: &Self) -> bool {
+        self.rank <= other.rank
     }
 }
 
-impl Ord for Rank {
+impl<T> Ord for Rank<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         if self.rank < other.rank {
-            Ordering::Less
+            Ordering::Greater
         } else if self.rank == other.rank {
             Ordering::Equal
         } else {
-            Ordering::Greater
+            Ordering::Less
         }
     }
 }

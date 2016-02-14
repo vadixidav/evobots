@@ -92,6 +92,7 @@ pub struct Bot {
     pub energy: i64,
     pub signal: i64,
     memory: [i64; finalbrain::TOTAL_MEMORY],
+    pub outputs: [i64; finalbrain::TOTAL_OUTPUTS],
 }
 
 impl Bot {
@@ -132,6 +133,7 @@ impl Bot {
             signal: 0,
 
             memory: [0; finalbrain::TOTAL_MEMORY],
+            outputs: Default::default(),
         }
     }
 }
