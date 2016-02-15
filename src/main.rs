@@ -53,7 +53,10 @@ fn main() {
     }
 
     let perspective = *na::Persp3::new(1.5, 1.0, 0.0, 500.0).to_mat().as_ref();
-    let mut movement = na::Iso3::<f32>::one();
+    let mut movement = na::Iso3::<f32>::new(
+        na::Vec3::new(0.0, 0.0, 30.0),
+        na::Vec3::new(0.0, 0.0, 0.0),
+    );
 
     let mut upstate = glium::glutin::ElementState::Released;
     let mut dnstate = glium::glutin::ElementState::Released;
@@ -85,7 +88,8 @@ fn main() {
             for i in 0..nodes.len() {
                 for j in (i+1)..nodes.len() {
                     //Apply repulsion forces to keep them from being too close
-                    zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle, -REPULSION_MAGNITUDE);
+                    zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
+                        -REPULSION_MAGNITUDE * nodes[i].weight.radius() as f64);
                 }
             }
         }
