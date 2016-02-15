@@ -135,12 +135,14 @@ fn main() {
 
         //Update bots in nodes
         for i in deps.node_indices() {
-            let pnode = deps.node_weight_mut(i).unwrap();
+            let pnode = deps.node_weight(i).unwrap();
             //The current node is always 0; everything else comes after in no particular order
             let neighbors = std::iter::once(i).chain(deps.neighbors(i)).collect::<Vec<_>>();
 
+
+
             //Iterate through all bots (b) in the node being processed
-            for b in deps.node_weight_mut(i).unwrap().bots.iter_mut() {
+            for (i, b) in pnode.bots.iter().enumerate() {
                 use std::collections::BinaryHeap;
                 //Create a BTree to rank the nodes and fill it with default nodes
                 let mut map = BinaryHeap::from(
@@ -153,6 +155,9 @@ fn main() {
                     let n = deps.node_weight(n).unwrap();
                     //Set the inputs for the node brain
                     node_inputs[0] = n.energy;
+                    node_inputs[1] = n.bots.len() as i64;
+                    node_inputs[2] = pnode.bots.len() as i64;
+                    node_inputs[3] = b.energy;
                 }
             }
         }
