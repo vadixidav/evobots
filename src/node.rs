@@ -3,6 +3,8 @@ extern crate zoom;
 use super::bot::*;
 use super::Vec3;
 
+static BOTS_RADIUS_MULTIPLIER: f32 = 0.01;
+static RADIUS_STATIC: f32 = 1.0;
 static ENERGY_RATIO: f64 = 0.003;
 pub static ENERGY_THRESHOLD: i64 = 500000;
 
@@ -61,6 +63,7 @@ pub struct Node {
     pub particle: RadParticle,
     pub energy: i64,
     pub bots: Vec<Box<Bot>>,
+    pub moved_bots: Vec<Box<Bot>>,
 }
 
 impl Node {
@@ -69,6 +72,7 @@ impl Node {
             energy: energy,
             particle: RadParticle{p: particle},
             bots: Vec::new(),
+            moved_bots: Vec::new(),
         }
     }
 
@@ -82,6 +86,9 @@ impl Node {
     pub fn should_split(&self) -> bool {
         self.energy >= ENERGY_THRESHOLD
     }
+    pub fn should_obliterate(&self) -> bool {
+        self.energy <= 0
+    }
 
     pub fn color(&self) -> [f32; 4] {
         [
@@ -90,5 +97,8 @@ impl Node {
             self.energy as f32 / ENERGY_THRESHOLD as f32,
             1.0,
         ]
+    }
+    pub fn radius(&self) -> f32 {
+        RADIUS_STATIC + BOTS_RADIUS_MULTIPLIER * (self.bots.len() as f32)
     }
 }

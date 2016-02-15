@@ -4,8 +4,6 @@ use self::rand::Rng;
 
 pub type R = rand::isaac::Isaac64Rng;
 
-pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 100;
-
 pub mod nodebrain {
     //0, 1, 2, -1, node energy, bot count, present node bot count, self energy, and memory are inputs.
     pub const STATIC_INPUTS: usize = 8;
@@ -30,8 +28,8 @@ pub mod finalbrain {
     pub const TOTAL_BOT_INPUTS: usize = 4;
     pub const TOTAL_NODE_INPUTS: usize = 4;
     pub const TOTAL_MEMORY: usize = 4;
-    //0, 1, 2, -1, present node energy, bot count, self energy, and memory are inputs
-    pub const STATIC_INPUTS: usize = 7;
+    //0, 1, 2, -1, present node energy, bot count, self energy, self index, and memory are inputs
+    pub const STATIC_INPUTS: usize = 8;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + TOTAL_MEMORY +
         //Add inputs for all the node brains
         TOTAL_NODE_INPUTS * super::nodebrain::TOTAL_OUTPUTS +
@@ -45,7 +43,10 @@ pub mod finalbrain {
     pub const DEFAULT_INSTRUCTIONS: usize = 64;
 }
 
-static DEFAULT_FOOD: i64 = 16384;
+pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 1000;
+pub const EXISTENCE_COST: i64 = 500;
+pub const MAX_ENERGY: i64 = 65536;
+static DEFAULT_ENERGY: i64 = 16384;
 
 #[derive(Clone)]
 pub enum Ins {
@@ -68,10 +69,11 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
         Ins::ADD => a + b,
         Ins::SUB => a - b,
         Ins::MUL => a * b,
-        Ins::DIV => if b == 0 {
-            i64::max_value()
-        } else {
-            a / b
+        Ins::DIV => {
+            match a.checked_div(b) {
+                Some(v) => v,
+                None => 0,
+            }
         },
         Ins::GRT => if a > b {
             1
@@ -105,12 +107,22 @@ fn mutator(ins: &mut Ins, rng: &mut R) {
     *ins = unsafe{mem::transmute(rng.gen_range::<u8>(0, Ins::MAX as u8))};
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Decision {
     pub mate: i64,
     pub node: i64,
     //This will be ran through a sigmoid
     pub rate: i64,
+}
+
+impl Default for Decision {
+    fn default() -> Self {
+        Decision{
+            mate: -1,
+            node: -1,
+            rate: 0,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -157,12 +169,57 @@ impl Bot {
                 fvec.into_iter(),
                 mutator, processor),
 
-            energy: DEFAULT_FOOD,
+            energy: DEFAULT_ENERGY,
 
             signal: 0,
 
             memory: [0; finalbrain::TOTAL_MEMORY],
             decision: Default::default(),
         }
+    }
+
+    pub fn mate(&mut self, other: &Self, rng: &mut R) -> Self {
+        use mli::Genetic;
+        //Divide energy in half when mating for the mater
+        self.energy /= 2;
+        let mut b = Bot{
+            bot_brain: mli::Genetic::mate((&self.bot_brain, &other.bot_brain), rng),
+            node_brain: mli::Genetic::mate((&self.node_brain, &other.node_brain), rng),
+            final_brain: mli::Genetic::mate((&self.final_brain, &other.final_brain), rng),
+            energy: self.energy,
+            signal: self.signal,
+            memory: self.memory,
+            decision: self.decision.clone(),
+        };
+        //Perform unit mutations on offspring
+        b.bot_brain.mutate(rng);
+        b.node_brain.mutate(rng);
+        b.final_brain.mutate(rng);
+        b
+    }
+
+    pub fn divide(&mut self, rng: &mut R) -> Self {
+        use mli::Genetic;
+        //Divide energy in half when dividing
+        self.energy /= 2;
+        let mut b = Bot{
+            bot_brain: self.bot_brain.clone(),
+            node_brain: self.node_brain.clone(),
+            final_brain: self.final_brain.clone(),
+            energy: self.energy,
+            signal: self.signal,
+            memory: self.memory,
+            //Clone the rate of energy consumption in the decision
+            decision: self.decision.clone(),
+        };
+        //Perform unit mutations on offspring
+        b.bot_brain.mutate(rng);
+        b.node_brain.mutate(rng);
+        b.final_brain.mutate(rng);
+        b
+    }
+
+    pub fn cycle(&mut self) {
+        self.energy -= EXISTENCE_COST;
     }
 }

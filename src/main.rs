@@ -9,7 +9,10 @@ extern crate itertools;
 extern crate mli;
 use itertools::*;
 
-const SEPARATION_MAGNITUDE: f64 = 0.1;
+const SEPARATION_MAGNITUDE: f64 = 1.0;
+const REPULSION_MAGNITUDE: f64 = 0.1;
+const ATTRACTION_MAGNITUDE: f64 = 0.001;
+const SPAWN_RATE: f64 = 0.06;
 
 use na::{ToHomogeneous, Translation, Rotation};
 use num::traits::One;
@@ -40,7 +43,7 @@ fn main() {
     let glowy = gg::Renderer::new(&display);
 
     let mut deps = petgraph::Graph::<Node, bool, petgraph::Undirected>::new_undirected();
-    deps.add_node(Node::new(5000, zoom::BasicParticle::default()));
+    deps.add_node(Node::new(50000, zoom::BasicParticle::default()));
 
     //Set mouse cursor to middle
     {
@@ -61,6 +64,7 @@ fn main() {
 
     loop {
         use glium::Surface;
+        use std::collections::BinaryHeap;
 
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
@@ -73,7 +77,7 @@ fn main() {
             let nodes = deps.index_twice_mut(node_indices.0, node_indices.1);
 
             //Apply spring forces to keep them together
-            zoom::hooke(&nodes.0.particle, &nodes.1.particle, 0.001);
+            zoom::hooke(&nodes.0.particle, &nodes.1.particle, ATTRACTION_MAGNITUDE);
         }
 
         {
@@ -81,14 +85,18 @@ fn main() {
             for i in 0..nodes.len() {
                 for j in (i+1)..nodes.len() {
                     //Apply repulsion forces to keep them from being too close
-                    zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle, -0.001);
+                    zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle, -REPULSION_MAGNITUDE);
                 }
             }
         }
 
+        //Determine how many nodes will spawn
+        let spawners = rng.gen_range(0.0, (SPAWN_RATE * deps.node_count() as f64).powi(2)) as usize;
+        let mut spawn_places = (0..spawners).map(|_| Rank{rank: rng.gen_range(0, deps.node_count() as i64), data: ()}).collect::<BinaryHeap<_>>();
+
         //Update nodes
-        for i in deps.node_indices() {
-            if deps.node_weight(i).unwrap().should_split() {
+        for (ix, i) in deps.node_indices().enumerate() {
+            if deps[i].should_split() {
                 use std::f64::consts::PI;
                 use num::traits::Float;
                 let theta = rng.gen_range(0.0, 2.0 * PI);
@@ -100,13 +108,13 @@ fn main() {
                 );
 
                 //Divide energy in half before splitting
-                deps.node_weight_mut(i).unwrap().energy /= 2;
+                deps[i].energy /= 2;
 
                 //Destroy all bots in node
-                deps.node_weight_mut(i).unwrap().bots.clear();
+                deps[i].bots.clear();
 
                 let nnode = {
-                    let nref = deps.node_weight(i).unwrap();
+                    let nref = &deps[i];
                     Node::new(
                         nref.energy,
                         nref.particle.p.clone(),
@@ -114,21 +122,43 @@ fn main() {
                 };
 
                 let newindex = deps.add_node(nnode);
+                //Add all of the old node's neighbors
+                let it = deps.neighbors(i).collect_vec();
+                for iin in it {
+                    deps.add_edge(newindex, iin, false);
+                }
 
+                //Add the old node as a neighbor
                 deps.add_edge(i, newindex, false);
 
                 //Add a positive impulse to this particle
-                deps.node_weight_mut(i).unwrap().particle.p.velocity =
-                    deps.node_weight_mut(i).unwrap().particle.p.velocity +
+                deps[i].particle.p.velocity =
+                    deps[i].particle.p.velocity +
                     rand_unit_dir * SEPARATION_MAGNITUDE;
 
                 //Add a negative impulse to the other particle
-                deps.node_weight_mut(newindex).unwrap().particle.p.velocity =
-                    deps.node_weight_mut(newindex).unwrap().particle.p.velocity -
+                deps[newindex].particle.p.velocity =
+                    deps[newindex].particle.p.velocity -
                     rand_unit_dir * SEPARATION_MAGNITUDE;
             }
 
-            deps.node_weight_mut(i).unwrap().advance();
+            while let Some(&Rank{rank: ri, ..}) = spawn_places.peek() {
+                if ri as usize == ix {
+                    deps[i].bots.push(Box::new(Bot::new(&mut rng)));
+                    spawn_places.pop();
+                } else {
+                    break;
+                }
+            }
+
+            deps[i].advance();
+        }
+
+        //Update obliteration
+        for i in deps.node_indices().rev() {
+            if deps[i].should_obliterate() {
+                deps.remove_node(i);
+            }
         }
 
         //Make arrays for bot brain inputs
@@ -143,21 +173,20 @@ fn main() {
         bot_inputs.iter_mut().set_from(statics.iter().cloned());
         final_inputs.iter_mut().set_from(statics.iter().cloned());
 
-        let all_nodes = deps.node_indices().collect_vec();
-
         //Update bots in nodes
-        for i in all_nodes {
+        for i in deps.node_indices() {
+            use std::collections::BinaryHeap;
             //The current node is always 0; everything else comes after
             let neighbors = std::iter::once(i).chain(deps.neighbors(i)).collect_vec();
 
-            let mut movers = Vec::<usize>::new();
+            let mut movers = BinaryHeap::<usize>::new();
+            let mut maters = Vec::<usize>::new();
 
             //Iterate through all bots (b) in the node being processed
-            for ib in 0..deps.node_weight(i).unwrap().bots.len() {
-                use std::collections::BinaryHeap;
+            for ib in 0..deps[i].bots.len() {
                 use mli::SISO;
                 {
-                    let pnode = deps.node_weight(i).unwrap();
+                    let ref pnode = deps[i];
                     //Create a BTree to rank the nodes and fill it with default nodes
                     let mut node_heap = BinaryHeap::from(
                         vec![Rank{rank: 0, data: [-1; nodebrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_NODE_INPUTS]
@@ -171,7 +200,7 @@ fn main() {
                     //Iterate through each node and produce the outputs
                     for (i, &n) in neighbors.iter().enumerate() {
                         //Get the node reference
-                        let n = deps.node_weight(n).unwrap();
+                        let n = &deps[n];
                         //Set the inputs for the node brain
                         node_inputs[4] = n.energy;
                         node_inputs[5] = n.bots.len() as i64;
@@ -231,6 +260,7 @@ fn main() {
                     final_inputs[4] = pnode.energy;
                     final_inputs[5] = pnode.bots.len() as i64;
                     final_inputs[6] = pnode.bots[ib].energy;
+                    final_inputs[7] = ib as i64;
                     final_inputs[finalbrain::STATIC_INPUTS..].iter_mut().set_from(
                         pnode.bots[ib].memory.iter().cloned().chain(
                             //Provide the highest ranking node inputs
@@ -242,8 +272,72 @@ fn main() {
                     );
                 }
 
-                let mb = &mut deps.node_weight_mut(i).unwrap().bots[ib];
-                let mut compute = mb.final_brain.compute(&final_inputs[..]);
+
+                {
+                    let mb = &mut *deps[i].bots[ib];
+                    let (brain, memory, decision) = (&mut mb.final_brain, &mut mb.memory, &mut mb.decision);
+                    let mut compute = brain.compute(&final_inputs[..]);
+                    decision.mate = compute.next().unwrap();
+                    decision.node = compute.next().unwrap();
+                    decision.rate = compute.next().unwrap();
+                    memory.iter_mut().set_from(compute);
+                }
+                let mb = &*deps[i].bots[ib];
+                if mb.decision.mate >= 0 && mb.decision.mate < deps[i].bots.len() as i64 && mb.energy == MAX_ENERGY {
+                    maters.push(ib);
+                }
+                //Node 0 is not included because that is the present node
+                if mb.decision.node > 0 && mb.decision.node < neighbors.len() as i64 {
+                    movers.push(ib);
+                }
+            }
+
+            //Perform the matings on the node
+            for ib in maters {
+                if deps[i].bots[ib].decision.mate as usize == ib {
+                    let nbot = Box::new(deps[i].bots[ib].divide(&mut rng));
+                    deps[i].bots.push(nbot);
+                } else {
+                    let gn = &mut deps[i];
+                    //Do this unsafely because we know the indices are in bounds and not the same
+                    let nbot = Box::new(unsafe{
+                        let bm = &mut *(gn.bots.get_unchecked_mut(ib) as *mut Box<Bot>);
+                        let bo = gn.bots.get_unchecked_mut(bm.decision.mate as usize);
+                        bm.mate(bo, &mut rng)
+                    });
+                    gn.bots.push(nbot);
+                }
+            }
+
+            //Move bots to the node they desire starting from the end of the vector to avoid swaps
+            while let Some(ib) = movers.pop() {
+                let n = deps[i].bots[ib].decision.node;
+                let b = deps[i].bots.swap_remove(ib);
+                deps[neighbors[n as usize]].moved_bots.push(b);
+            }
+        }
+
+        //Update all nodes with bot movements, etc
+        for i in deps.node_indices() {
+            let n = &mut deps[i];
+            for b in n.bots.iter_mut() {
+                use num::Float;
+                let asking = ((1.0/(1.0 + (b.decision.rate as f64).exp()) - 0.5) * ENERGY_EXCHANGE_MAGNITUDE as f64) as i64;
+                b.energy += asking;
+                n.energy -= asking;
+                if b.energy > MAX_ENERGY {
+                    b.energy = MAX_ENERGY;
+                }
+            }
+            while let Some(b) = n.moved_bots.pop() {
+                n.bots.push(b);
+            }
+            for ib in (0..n.bots.len()).rev() {
+                n.bots[ib].cycle();
+                //Remove any dead bots
+                if n.bots[ib].energy <= 0 {
+                    n.bots.swap_remove(ib);
+                }
             }
         }
 
@@ -253,7 +347,8 @@ fn main() {
                 gg::Node{
                     position: vec_to_spos(n.particle.p.position),
                     color: n.color(),
-                    falloff: 0.25,
+                    falloff: 0.15,
+                    radius: n.radius(),
                 }
             ).collect_vec()[..]);
 
@@ -268,12 +363,14 @@ fn main() {
                     std::iter::once(gg::Node{
                         position: vec_to_spos(nodes.0.particle.p.position),
                         color: nodes.0.color(),
-                        falloff: 0.25
+                        falloff: 0.15,
+                        radius: nodes.0.radius(),
                     }).chain(
                     std::iter::once(gg::Node{
                         position: vec_to_spos(nodes.1.particle.p.position),
                         color: nodes.1.color(),
-                        falloff: 0.25
+                        falloff: 0.15,
+                        radius: nodes.1.radius(),
                     }))
                 }
             ).collect_vec()[..]
