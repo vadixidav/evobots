@@ -5,6 +5,7 @@ authors = ["Geordon Worley <vadixidav@gmail.com>"]
 
 [dependencies]
 rand = "0.3.13"
+itertools = "0.4.8"
 num = "0.1.30"
 zoom = "1.2.0"
 glowygraph = "0.3.0"

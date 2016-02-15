@@ -2,7 +2,6 @@ extern crate zoom;
 
 use super::bot::*;
 use super::Vec3;
-use self::zoom::*;
 
 static ENERGY_RATIO: f64 = 0.003;
 pub static ENERGY_THRESHOLD: i64 = 500000;
@@ -14,19 +13,19 @@ pub struct RadParticle {
     pub p: zoom::BasicParticle<Vec3, f64>,
 }
 
-impl Position<Vec3> for RadParticle {
+impl zoom::Position<Vec3> for RadParticle {
     fn position(&self) -> Vec3 {
         self.p.position()
     }
 }
 
-impl Velocity<Vec3> for RadParticle {
+impl zoom::Velocity<Vec3> for RadParticle {
     fn velocity(&self) -> Vec3 {
         self.p.velocity()
     }
 }
 
-impl Particle<Vec3, f64> for RadParticle {
+impl zoom::Particle<Vec3, f64> for RadParticle {
     fn impulse(&self, v: &Vec3) {
         self.p.impulse(v);
     }
@@ -36,23 +35,23 @@ impl Particle<Vec3, f64> for RadParticle {
     }
 }
 
-impl Inertia<f64> for RadParticle {
+impl zoom::Inertia<f64> for RadParticle {
     fn inertia(&self) -> f64 {
         self.p.inertia()
     }
 }
 
-impl Quanta<f64> for RadParticle {
+impl zoom::Quanta<f64> for RadParticle {
     fn quanta(&self) -> f64 {
         self.p.quanta()
     }
 }
 
-impl PhysicsParticle<Vec3, f64> for RadParticle {
+impl zoom::PhysicsParticle<Vec3, f64> for RadParticle {
 
 }
 
-impl Ball<f64> for RadParticle {
+impl zoom::Ball<f64> for RadParticle {
     fn radius(&self) -> f64 {
         1.0
     }
@@ -65,7 +64,7 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn new(energy: i64, particle: BasicParticle<Vec3, f64>) -> Self {
+    pub fn new(energy: i64, particle: zoom::BasicParticle<Vec3, f64>) -> Self {
         Node{
             energy: energy,
             particle: RadParticle{p: particle},

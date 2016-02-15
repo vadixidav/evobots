@@ -4,18 +4,22 @@ use self::rand::Rng;
 
 pub type R = rand::isaac::Isaac64Rng;
 
-pub mod botbrain {
-    //Node energy, bot count, self energy, bot energy, bot signal, and memory are inputs.
-    pub const TOTAL_INPUTS: usize = 5 + super::finalbrain::TOTAL_MEMORY;
+pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 100;
+
+pub mod nodebrain {
+    //0, 1, 2, -1, node energy, bot count, present node bot count, self energy, and memory are inputs.
+    pub const STATIC_INPUTS: usize = 8;
+    pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
     pub const DEFAULT_INSTRUCTIONS: usize = 64;
 }
 
-pub mod nodebrain {
-    //Node energy, bot count, present node bot count, self energy, and memory are inputs.
-    pub const TOTAL_INPUTS: usize = 4 + super::finalbrain::TOTAL_MEMORY;
+pub mod botbrain {
+    //0, 1, 2, -1, node energy, bot count, self energy, bot energy, bot signal, and memory are inputs.
+    pub const STATIC_INPUTS: usize = 9;
+    pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
@@ -26,13 +30,16 @@ pub mod finalbrain {
     pub const TOTAL_BOT_INPUTS: usize = 4;
     pub const TOTAL_NODE_INPUTS: usize = 4;
     pub const TOTAL_MEMORY: usize = 4;
-    //Present node energy, bot count, self energy, and memory are inputs
-    pub const TOTAL_INPUTS: usize = 3 + TOTAL_MEMORY +
+    //0, 1, 2, -1, present node energy, bot count, self energy, and memory are inputs
+    pub const STATIC_INPUTS: usize = 7;
+    pub const TOTAL_INPUTS: usize = STATIC_INPUTS + TOTAL_MEMORY +
         //Add inputs for all the node brains
         TOTAL_NODE_INPUTS * super::nodebrain::TOTAL_OUTPUTS +
         //Add inputs for all the bot brains
         TOTAL_BOT_INPUTS * super::botbrain::TOTAL_OUTPUTS;
-    pub const TOTAL_OUTPUTS: usize = 5;
+    //Mate, Node, Energy Rate (as a sigmoid)
+    pub const STATIC_OUTPUTS: usize = 3;
+    pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
     pub const DEFAULT_INSTRUCTIONS: usize = 64;
@@ -98,6 +105,14 @@ fn mutator(ins: &mut Ins, rng: &mut R) {
     *ins = unsafe{mem::transmute(rng.gen_range::<u8>(0, Ins::MAX as u8))};
 }
 
+#[derive(Clone, Default)]
+pub struct Decision {
+    pub mate: i64,
+    pub node: i64,
+    //This will be ran through a sigmoid
+    pub rate: i64,
+}
+
 #[derive(Clone)]
 pub struct Bot {
     pub bot_brain: mli::Mep<Ins, R, i64, fn(&mut Ins, &mut R), fn(&Ins, i64, i64) -> i64>,
@@ -105,8 +120,8 @@ pub struct Bot {
     pub final_brain: mli::Mep<Ins, R, i64, fn(&mut Ins, &mut R), fn(&Ins, i64, i64) -> i64>,
     pub energy: i64,
     pub signal: i64,
-    memory: [i64; finalbrain::TOTAL_MEMORY],
-    pub outputs: [i64; finalbrain::TOTAL_OUTPUTS],
+    pub memory: [i64; finalbrain::TOTAL_MEMORY],
+    pub decision: Decision,
 }
 
 impl Bot {
@@ -147,7 +162,7 @@ impl Bot {
             signal: 0,
 
             memory: [0; finalbrain::TOTAL_MEMORY],
-            outputs: Default::default(),
+            decision: Default::default(),
         }
     }
 }

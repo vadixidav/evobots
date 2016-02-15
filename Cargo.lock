@@ -5,6 +5,7 @@ dependencies = [
  "crossbeam 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium 0.13.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "glowygraph 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "itertools 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "mli 0.6.0 (git+https://github.com/vadixidav/mli)",
  "nalgebra 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num 0.1.30 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -269,6 +270,11 @@ dependencies = [
  "winapi 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "x11-dl 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "itertools"
+version = "0.4.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "kernel32-sys"
