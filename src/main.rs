@@ -10,7 +10,7 @@ extern crate mli;
 use itertools::*;
 
 const SEPARATION_MAGNITUDE: f64 = 1.0;
-const REPULSION_MAGNITUDE: f64 = 0.1;
+const REPULSION_MAGNITUDE: f64 = 1.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
 const SPAWN_RATE: f64 = 0.06;
 
