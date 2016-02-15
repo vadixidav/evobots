@@ -149,99 +149,101 @@ fn main() {
         for i in all_nodes {
             //The current node is always 0; everything else comes after
             let neighbors = std::iter::once(i).chain(deps.neighbors(i)).collect_vec();
-            let pnode = deps.node_weight(i).unwrap();
 
             let mut movers = Vec::<usize>::new();
 
             //Iterate through all bots (b) in the node being processed
-            for (ib, b) in pnode.bots.iter().enumerate() {
+            for ib in 0..deps.node_weight(i).unwrap().bots.len() {
                 use std::collections::BinaryHeap;
                 use mli::SISO;
-                //Create a BTree to rank the nodes and fill it with default nodes
-                let mut node_heap = BinaryHeap::from(
-                    vec![Rank{rank: 0, data: [-1; nodebrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_NODE_INPUTS]
-                );
+                {
+                    let pnode = deps.node_weight(i).unwrap();
+                    //Create a BTree to rank the nodes and fill it with default nodes
+                    let mut node_heap = BinaryHeap::from(
+                        vec![Rank{rank: 0, data: [-1; nodebrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_NODE_INPUTS]
+                    );
 
-                //Create a BTree to rank the nodes and fill it with default bots
-                let mut bot_heap = BinaryHeap::from(
-                    vec![Rank{rank: 0, data: [-1; botbrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_BOT_INPUTS]
-                );
+                    //Create a BTree to rank the nodes and fill it with default bots
+                    let mut bot_heap = BinaryHeap::from(
+                        vec![Rank{rank: 0, data: [-1; botbrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_BOT_INPUTS]
+                    );
 
-                //Iterate through each node and produce the outputs
-                for (i, &n) in neighbors.iter().enumerate() {
-                    //Get the node reference
-                    let n = deps.node_weight(n).unwrap();
-                    //Set the inputs for the node brain
-                    node_inputs[4] = n.energy;
-                    node_inputs[5] = n.bots.len() as i64;
-                    node_inputs[6] = pnode.bots.len() as i64;
-                    node_inputs[7] = b.energy;
-                    node_inputs[nodebrain::STATIC_INPUTS..].iter_mut().set_from(b.memory.iter().cloned());
+                    //Iterate through each node and produce the outputs
+                    for (i, &n) in neighbors.iter().enumerate() {
+                        //Get the node reference
+                        let n = deps.node_weight(n).unwrap();
+                        //Set the inputs for the node brain
+                        node_inputs[4] = n.energy;
+                        node_inputs[5] = n.bots.len() as i64;
+                        node_inputs[6] = pnode.bots.len() as i64;
+                        node_inputs[7] = pnode.bots[ib].energy;
+                        node_inputs[nodebrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
-                    let mut compute = b.node_brain.compute(&node_inputs[..]);
+                        let mut compute = pnode.bots[ib].node_brain.compute(&node_inputs[..]);
 
-                    let rank = Rank{
-                        rank: compute.next().unwrap(),
-                        data: {
-                            let mut l = [-1; nodebrain::TOTAL_OUTPUTS];
-                            l[0] = i as i64;
-                            l[1..].iter_mut().set_from(compute);
-                            l
-                        },
-                    };
+                        let rank = Rank{
+                            rank: compute.next().unwrap(),
+                            data: {
+                                let mut l = [-1; nodebrain::TOTAL_OUTPUTS];
+                                l[0] = i as i64;
+                                l[1..].iter_mut().set_from(compute);
+                                l
+                            },
+                        };
 
-                    //Add this rank to the heap
-                    node_heap.push(rank);
-                    //Remove the lowest rank from the heap to stay at the same amount
-                    node_heap.pop();
+                        //Add this rank to the heap
+                        node_heap.push(rank);
+                        //Remove the lowest rank from the heap to stay at the same amount
+                        node_heap.pop();
+                    }
+
+                    //Iterate through each bot and produce the outputs
+                    for (iob, ob) in pnode.bots.iter().enumerate() {
+                        //Set the inputs for the bot brain
+                        bot_inputs[4] = pnode.energy;
+                        bot_inputs[5] = pnode.bots.len() as i64;
+                        bot_inputs[6] = pnode.bots[ib].energy;
+                        bot_inputs[7] = ob.energy;
+                        bot_inputs[8] = ob.signal;
+                        bot_inputs[botbrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
+
+                        let mut compute = pnode.bots[ib].bot_brain.compute(&bot_inputs[..]);
+
+                        let rank = Rank{
+                            rank: compute.next().unwrap(),
+                            data: {
+                                let mut l = [-1; botbrain::TOTAL_OUTPUTS];
+                                l[0] = iob as i64;
+                                l[1..].iter_mut().set_from(compute);
+                                l
+                            },
+                        };
+
+                        //Add this rank to the heap
+                        bot_heap.push(rank);
+                        //Remove the lowest rank from the heap to stay at the same amount
+                        bot_heap.pop();
+                    }
+
+                    //Make the bot's final decision
+
+                    //Provide static inputs
+                    final_inputs[4] = pnode.energy;
+                    final_inputs[5] = pnode.bots.len() as i64;
+                    final_inputs[6] = pnode.bots[ib].energy;
+                    final_inputs[finalbrain::STATIC_INPUTS..].iter_mut().set_from(
+                        pnode.bots[ib].memory.iter().cloned().chain(
+                            //Provide the highest ranking node inputs
+                            node_heap.iter().flat_map(|r| r.data.iter().cloned())
+                        ).chain(
+                            //Provide the highest ranking bot inputs
+                            bot_heap.iter().flat_map(|r| r.data.iter().cloned())
+                        )
+                    );
                 }
 
-                //Iterate through each bot and produce the outputs
-                for (ib, ob) in pnode.bots.iter().enumerate() {
-                    //Set the inputs for the bot brain
-                    bot_inputs[4] = pnode.energy;
-                    bot_inputs[5] = pnode.bots.len() as i64;
-                    bot_inputs[6] = b.energy;
-                    bot_inputs[7] = ob.energy;
-                    bot_inputs[8] = ob.signal;
-                    bot_inputs[botbrain::STATIC_INPUTS..].iter_mut().set_from(b.memory.iter().cloned());
-
-                    let mut compute = b.bot_brain.compute(&bot_inputs[..]);
-
-                    let rank = Rank{
-                        rank: compute.next().unwrap(),
-                        data: {
-                            let mut l = [-1; botbrain::TOTAL_OUTPUTS];
-                            l[0] = ib as i64;
-                            l[1..].iter_mut().set_from(compute);
-                            l
-                        },
-                    };
-
-                    //Add this rank to the heap
-                    bot_heap.push(rank);
-                    //Remove the lowest rank from the heap to stay at the same amount
-                    bot_heap.pop();
-                }
-
-                //Make the bot's final decision
-
-                //Provide static inputs
-                final_inputs[4] = pnode.energy;
-                final_inputs[5] = pnode.bots.len() as i64;
-                final_inputs[6] = b.energy;
-                final_inputs[finalbrain::STATIC_INPUTS..].iter_mut().set_from(
-                    b.memory.iter().cloned().chain(
-                        //Provide the highest ranking node inputs
-                        node_heap.iter().flat_map(|r| r.data.iter().cloned())
-                    ).chain(
-                        //Provide the highest ranking bot inputs
-                        bot_heap.iter().flat_map(|r| r.data.iter().cloned())
-                    )
-                );
-
-                let mut compute = b.final_brain.compute(&final_inputs[..]);
                 let mb = &mut deps.node_weight_mut(i).unwrap().bots[ib];
+                let mut compute = mb.final_brain.compute(&final_inputs[..]);
             }
         }
 
