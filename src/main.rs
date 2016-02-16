@@ -15,7 +15,7 @@ const ATTRACTION_MAGNITUDE: f64 = 0.001;
 const BOT_GRAVITATION_MAGNITUDE: f64 = 1.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.01;
 const SPAWN_RATE: f64 = 0.03;
-const CONNECT_PROBABILITY: f64 = 0.9;
+const CONNECT_PROBABILITY: f64 = 1.0;
 
 use na::{ToHomogeneous, Translation, Rotation};
 use num::traits::One;
