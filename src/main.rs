@@ -14,11 +14,11 @@ const REPULSION_MAGNITUDE: f64 = 10.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
 const BOT_GRAVITATION_MAGNITUDE: f64 = 1.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.01;
-const SPAWN_RATE: f64 = 0.03;
-const CONNECT_PROBABILITY: f64 = 1.0;
+const SPAWN_RATE: f64 = 0.025;
+const CONNECT_PROBABILITY: f64 = 0.96;
+const MOVE_SPEED: f32 = 1.0;
 
 use na::{ToHomogeneous, Translation, Rotation};
-use num::traits::One;
 
 mod bot;
 use bot::*;
@@ -439,22 +439,22 @@ fn main() {
         }
 
         if upstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(0.0, -0.5, 0.0));
+            movement.append_translation_mut(&na::Vec3::new(0.0, -MOVE_SPEED, 0.0));
         }
         if dnstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(0.0, 0.5, 0.0));
+            movement.append_translation_mut(&na::Vec3::new(0.0, MOVE_SPEED, 0.0));
         }
         if ltstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(-0.5, 0.0, 0.0));
+            movement.append_translation_mut(&na::Vec3::new(-MOVE_SPEED, 0.0, 0.0));
         }
         if rtstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(0.5, 0.0, 0.0));
+            movement.append_translation_mut(&na::Vec3::new(MOVE_SPEED, 0.0, 0.0));
         }
         if fdstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(0.0, 0.0, -0.5));
+            movement.append_translation_mut(&na::Vec3::new(0.0, 0.0, -MOVE_SPEED));
         }
         if bkstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(0.0, 0.0, 0.5));
+            movement.append_translation_mut(&na::Vec3::new(0.0, 0.0, MOVE_SPEED));
         }
     }
 }
