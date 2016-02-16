@@ -64,6 +64,8 @@ pub struct Node {
     pub energy: i64,
     pub bots: Vec<Box<Bot>>,
     pub moved_bots: Vec<Box<Bot>>,
+    pub deaths: i64,
+    pub moves: i64,
 }
 
 impl Node {
@@ -73,6 +75,8 @@ impl Node {
             particle: RadParticle{p: particle},
             bots: Vec::new(),
             moved_bots: Vec::new(),
+            deaths: 0,
+            moves: 0,
         }
     }
 
@@ -92,9 +96,17 @@ impl Node {
 
     pub fn color(&self) -> [f32; 4] {
         [
+            if self.bots.len() == 0 {
+                0.0
+            } else {
+                self.deaths as f32 / self.bots.len() as f32
+            },
             self.energy as f32 / ENERGY_THRESHOLD as f32,
-            self.energy as f32 / ENERGY_THRESHOLD as f32,
-            self.energy as f32 / ENERGY_THRESHOLD as f32,
+            if self.bots.len() == 0 {
+                0.0
+            } else {
+                self.moves as f32 / self.bots.len() as f32
+            },
             1.0,
         ]
     }

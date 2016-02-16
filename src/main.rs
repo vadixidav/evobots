@@ -10,9 +10,12 @@ extern crate mli;
 use itertools::*;
 
 const SEPARATION_MAGNITUDE: f64 = 1.0;
-const REPULSION_MAGNITUDE: f64 = 1.0;
+const REPULSION_MAGNITUDE: f64 = 10.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
-const SPAWN_RATE: f64 = 0.06;
+const BOT_GRAVITATION_MAGNITUDE: f64 = 1.0;
+const PULL_CENTER_MAGNITUDE: f64 = 0.01;
+const SPAWN_RATE: f64 = 0.03;
+const CONNECT_PROBABILITY: f64 = 0.9;
 
 use na::{ToHomogeneous, Translation, Rotation};
 use num::traits::One;
@@ -34,6 +37,7 @@ fn vec_to_spos(v: Vec3) -> [f32; 3] {
 
 fn main() {
     use glium::DisplayBuild;
+    use num::Zero;
     use rand::{SeedableRng, Rng};
     let mut rng = rand::Isaac64Rng::from_seed(&[1, 2, 3, 4]);
 
@@ -45,6 +49,8 @@ fn main() {
     let mut deps = petgraph::Graph::<Node, bool, petgraph::Undirected>::new_undirected();
     deps.add_node(Node::new(50000, zoom::BasicParticle::default()));
 
+    let central = zoom::BasicParticle::new(1.0, Vec3::zero(), Vec3::zero(), 1.0);
+
     //Set mouse cursor to middle
     {
         let (dimx, dimy) = display.get_framebuffer_dimensions();
@@ -54,7 +60,7 @@ fn main() {
 
     let perspective = *na::Persp3::new(1.5, 1.0, 0.0, 500.0).to_mat().as_ref();
     let mut movement = na::Iso3::<f32>::new(
-        na::Vec3::new(0.0, 0.0, 30.0),
+        na::Vec3::new(0.0, 0.0, 100.0),
         na::Vec3::new(0.0, 0.0, 0.0),
     );
 
@@ -86,10 +92,13 @@ fn main() {
         {
             let nodes = deps.raw_nodes();
             for i in 0..nodes.len() {
+                use zoom::PhysicsParticle;
+                nodes[i].weight.particle.hooke_to(&central, PULL_CENTER_MAGNITUDE);
                 for j in (i+1)..nodes.len() {
                     //Apply repulsion forces to keep them from being too close
                     zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
-                        -REPULSION_MAGNITUDE * nodes[i].weight.radius() as f64);
+                        -REPULSION_MAGNITUDE * nodes[i].weight.radius() as f64 +
+                        BOT_GRAVITATION_MAGNITUDE * (nodes[i].weight.bots.len() * nodes[j].weight.bots.len()) as f64);
                 }
             }
         }
@@ -129,7 +138,11 @@ fn main() {
                 //Add all of the old node's neighbors
                 let it = deps.neighbors(i).collect_vec();
                 for iin in it {
-                    deps.add_edge(newindex, iin, false);
+                    if rng.gen_range(0.0, 1.0) < 0.5 {
+                        deps.add_edge(newindex, iin, false);
+                        let ed = deps.find_edge(iin, i).unwrap();
+                        deps.remove_edge(ed);
+                    }
                 }
 
                 //Add the old node as a neighbor
@@ -161,6 +174,14 @@ fn main() {
         //Update obliteration
         for i in deps.node_indices().rev() {
             if deps[i].should_obliterate() {
+                let neighbors = deps.neighbors(i).collect_vec();
+                for ix in 0..neighbors.len() {
+                    for jx in (ix+1)..neighbors.len() {
+                        if rng.gen_range(0.0, 1.0) < CONNECT_PROBABILITY {
+                            deps.update_edge(neighbors[ix], neighbors[jx], false);
+                        }
+                    }
+                }
                 deps.remove_node(i);
             }
         }
@@ -324,6 +345,7 @@ fn main() {
         //Update all nodes with bot movements, etc
         for i in deps.node_indices() {
             let n = &mut deps[i];
+            n.moves = n.moved_bots.len() as i64;
             for b in n.bots.iter_mut() {
                 use num::Float;
                 let asking = ((1.0/(1.0 + (b.decision.rate as f64).exp()) - 0.5) * ENERGY_EXCHANGE_MAGNITUDE as f64) as i64;
@@ -336,11 +358,13 @@ fn main() {
             while let Some(b) = n.moved_bots.pop() {
                 n.bots.push(b);
             }
+            n.deaths = 0;
             for ib in (0..n.bots.len()).rev() {
                 n.bots[ib].cycle();
                 //Remove any dead bots
                 if n.bots[ib].energy <= 0 {
                     n.bots.swap_remove(ib);
+                    n.deaths += 1;
                 }
             }
         }
@@ -351,7 +375,7 @@ fn main() {
                 gg::Node{
                     position: vec_to_spos(n.particle.p.position),
                     color: n.color(),
-                    falloff: 0.15,
+                    falloff: 0.25,
                     radius: n.radius(),
                 }
             ).collect_vec()[..]);
@@ -367,13 +391,13 @@ fn main() {
                     std::iter::once(gg::Node{
                         position: vec_to_spos(nodes.0.particle.p.position),
                         color: nodes.0.color(),
-                        falloff: 0.15,
+                        falloff: 0.1,
                         radius: nodes.0.radius(),
                     }).chain(
                     std::iter::once(gg::Node{
                         position: vec_to_spos(nodes.1.particle.p.position),
                         color: nodes.1.color(),
-                        falloff: 0.15,
+                        falloff: 0.1,
                         radius: nodes.1.radius(),
                     }))
                 }
@@ -406,8 +430,8 @@ fn main() {
                 glium::glutin::Event::MouseMoved((x, y)) => {
                     let (dimx, dimy) = display.get_framebuffer_dimensions();
                     let (hdimx, hdimy) = (dimx/2, dimy/2);
-                    movement.append_rotation_mut(&na::Vec3::new(-(y - hdimy as i32) as f32 / 128.0,
-                        (x - hdimx as i32) as f32 / 128.0, 0.0));
+                    movement.append_rotation_mut(&na::Vec3::new(-(y - hdimy as i32) as f32 / 192.0,
+                        (x - hdimx as i32) as f32 / 192.0, 0.0));
                     window.set_cursor_position(hdimx as i32, hdimy as i32).ok().unwrap();
                 },
                 _ => ()
@@ -415,22 +439,22 @@ fn main() {
         }
 
         if upstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(0.0, -0.1, 0.0));
+            movement.append_translation_mut(&na::Vec3::new(0.0, -0.5, 0.0));
         }
         if dnstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(0.0, 0.1, 0.0));
+            movement.append_translation_mut(&na::Vec3::new(0.0, 0.5, 0.0));
         }
         if ltstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(-0.1, 0.0, 0.0));
+            movement.append_translation_mut(&na::Vec3::new(-0.5, 0.0, 0.0));
         }
         if rtstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(0.1, 0.0, 0.0));
+            movement.append_translation_mut(&na::Vec3::new(0.5, 0.0, 0.0));
         }
         if fdstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(0.0, 0.0, -0.1));
+            movement.append_translation_mut(&na::Vec3::new(0.0, 0.0, -0.5));
         }
         if bkstate == glium::glutin::ElementState::Pressed {
-            movement.append_translation_mut(&na::Vec3::new(0.0, 0.0, 0.1));
+            movement.append_translation_mut(&na::Vec3::new(0.0, 0.0, 0.5));
         }
     }
 }

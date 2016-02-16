@@ -11,7 +11,7 @@ dependencies = [
  "num 0.1.30 (registry+https://github.com/rust-lang/crates.io-index)",
  "petgraph 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
- "zoom 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "zoom 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -539,7 +539,7 @@ dependencies = [
 
 [[package]]
 name = "zoom"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "nalgebra 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",

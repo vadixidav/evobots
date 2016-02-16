@@ -1,13 +1,13 @@
 [package]
 name = "evobots"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["Geordon Worley <vadixidav@gmail.com>"]
 
 [dependencies]
 rand = "0.3.13"
 itertools = "0.4.8"
 num = "0.1.30"
-zoom = "1.2.0"
+zoom = "1.2.1"
 glowygraph = "0.4.0"
 nalgebra = "0.5.1"
 crossbeam = "0.2.5"
