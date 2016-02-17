@@ -9,13 +9,14 @@ extern crate itertools;
 extern crate mli;
 use itertools::*;
 
-const SEPARATION_MAGNITUDE: f64 = 1.0;
+const SEPARATION_MAGNITUDE: f64 = 0.1;
 const REPULSION_MAGNITUDE: f64 = 10.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
 const BOT_GRAVITATION_MAGNITUDE: f64 = 1.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.01;
-const SPAWN_RATE: f64 = 0.032;
+const SPAWN_RATE: f64 = 0.03;
 const CONNECT_PROBABILITY: f64 = 0.96;
+const DISCONNECT_LENGTH: f64 = 150.0;
 const MOVE_SPEED: f32 = 1.0;
 
 use na::{ToHomogeneous, Translation, Rotation};
@@ -183,6 +184,16 @@ fn main() {
                     }
                 }
                 deps.remove_node(i);
+            }
+        }
+
+        for i in deps.edge_indices().rev() {
+            if let Some((i1, i2)) = deps.edge_endpoints(i) {
+                use zoom::{Position, Vector};
+                if (deps[i1].particle.position() - deps[i2].particle.position()).displacement_squared() >
+                    DISCONNECT_LENGTH.powi(2) {
+                    deps.remove_edge(i);
+                }
             }
         }
 
