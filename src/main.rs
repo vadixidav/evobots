@@ -10,13 +10,17 @@ extern crate mli;
 use itertools::*;
 
 const SEPARATION_MAGNITUDE: f64 = 0.1;
-const REPULSION_MAGNITUDE: f64 = 10.0;
+const REPULSION_MAGNITUDE: f64 = 200.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
-const BOT_GRAVITATION_MAGNITUDE: f64 = 1.0;
-const PULL_CENTER_MAGNITUDE: f64 = 0.01;
+const BOT_GRAVITATION_MAGNITUDE: f64 = -1.0;
+const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 const SPAWN_RATE: f64 = 0.03;
-const CONNECT_PROBABILITY: f64 = 0.96;
-const DISCONNECT_LENGTH: f64 = 150.0;
+const CONNECT_PROBABILITY: f64 = 1.0;
+const CONNECT_MAX_LENGTH: f64 = 150.0;
+const CONNECT_MIN_LENGTH: f64 = 30.0;
+const FRAME_PHYSICS_PERIOD: u64 = 2;
+
+const STARTING_POSITION: f32 = 600.0;
 const MOVE_SPEED: f32 = 1.0;
 
 use na::{ToHomogeneous, Translation, Rotation};
@@ -61,7 +65,7 @@ fn main() {
 
     let perspective = *na::Persp3::new(1.5, 1.0, 0.0, 500.0).to_mat().as_ref();
     let mut movement = na::Iso3::<f32>::new(
-        na::Vec3::new(0.0, 0.0, 100.0),
+        na::Vec3::new(0.0, 0.0, STARTING_POSITION),
         na::Vec3::new(0.0, 0.0, 0.0),
     );
 
@@ -72,6 +76,8 @@ fn main() {
     let mut fdstate = glium::glutin::ElementState::Released;
     let mut bkstate = glium::glutin::ElementState::Released;
 
+    let mut period = 0u64;
+
     loop {
         use glium::Surface;
         use std::collections::BinaryHeap;
@@ -81,26 +87,33 @@ fn main() {
 
         let matr = movement.to_homogeneous() * 3.0;
 
-        //Update forces between nodes
-        for i in deps.edge_indices() {
-            let node_indices = deps.edge_endpoints(i).unwrap();
-            let nodes = deps.index_twice_mut(node_indices.0, node_indices.1);
+        //Update forces between nodes on the correct periods
+        if period % FRAME_PHYSICS_PERIOD == 0 {
+            for i in deps.edge_indices() {
+                let node_indices = deps.edge_endpoints(i).unwrap();
+                let nodes = deps.index_twice_mut(node_indices.0, node_indices.1);
 
-            //Apply spring forces to keep them together
-            zoom::hooke(&nodes.0.particle, &nodes.1.particle, ATTRACTION_MAGNITUDE);
-        }
+                //Apply spring forces to keep them together
+                zoom::hooke(&nodes.0.particle, &nodes.1.particle, ATTRACTION_MAGNITUDE);
+            }
 
-        {
-            let nodes = deps.raw_nodes();
-            for i in 0..nodes.len() {
-                use zoom::PhysicsParticle;
-                nodes[i].weight.particle.hooke_to(&central, PULL_CENTER_MAGNITUDE);
-                for j in (i+1)..nodes.len() {
-                    //Apply repulsion forces to keep them from being too close
-                    zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
-                        -REPULSION_MAGNITUDE * nodes[i].weight.radius() as f64 +
-                        BOT_GRAVITATION_MAGNITUDE * (nodes[i].weight.bots.len() * nodes[j].weight.bots.len()) as f64);
+            //Update particle forces between each node
+            {
+                let nodes = deps.raw_nodes();
+                for i in 0..nodes.len() {
+                    use zoom::PhysicsParticle;
+                    nodes[i].weight.particle.hooke_to(&central, PULL_CENTER_MAGNITUDE);
+                    for j in (i+1)..nodes.len() {
+                        //Apply repulsion forces to keep them from being too close
+                        zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
+                            -REPULSION_MAGNITUDE + (BOT_GRAVITATION_MAGNITUDE) *
+                            (nodes[i].weight.bots.len() * nodes[j].weight.bots.len()) as f64);
+                    }
                 }
+            }
+
+            for n in deps.node_weights_mut() {
+                n.advance();
             }
         }
 
@@ -158,6 +171,12 @@ fn main() {
                 deps[newindex].particle.p.velocity =
                     deps[newindex].particle.p.velocity -
                     rand_unit_dir * SEPARATION_MAGNITUDE;
+
+                //Move the particles far enough away from each other so they can stay connected
+                deps[i].particle.p.position =
+                    deps[i].particle.p.position + rand_unit_dir * CONNECT_MIN_LENGTH;
+                deps[newindex].particle.p.position =
+                    deps[newindex].particle.p.position - rand_unit_dir * CONNECT_MIN_LENGTH;
             }
 
             while let Some(&Rank{rank: ri, ..}) = spawn_places.peek() {
@@ -168,8 +187,6 @@ fn main() {
                     break;
                 }
             }
-
-            deps[i].advance();
         }
 
         //Update obliteration
@@ -190,8 +207,8 @@ fn main() {
         for i in deps.edge_indices().rev() {
             if let Some((i1, i2)) = deps.edge_endpoints(i) {
                 use zoom::{Position, Vector};
-                if (deps[i1].particle.position() - deps[i2].particle.position()).displacement_squared() >
-                    DISCONNECT_LENGTH.powi(2) {
+                let mag = (deps[i1].particle.position() - deps[i2].particle.position()).displacement_squared();
+                if mag > CONNECT_MAX_LENGTH.powi(2) || mag < CONNECT_MIN_LENGTH.powi(2) {
                     deps.remove_edge(i);
                 }
             }
@@ -467,5 +484,6 @@ fn main() {
         if bkstate == glium::glutin::ElementState::Pressed {
             movement.append_translation_mut(&na::Vec3::new(0.0, 0.0, MOVE_SPEED));
         }
+        period += 1;
     }
 }

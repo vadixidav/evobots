@@ -11,7 +11,7 @@ pub mod nodebrain {
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub const DEFAULT_INSTRUCTIONS: usize = 64;
+    pub const DEFAULT_INSTRUCTIONS: usize = 32;
 }
 
 pub mod botbrain {
@@ -21,7 +21,7 @@ pub mod botbrain {
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub const DEFAULT_INSTRUCTIONS: usize = 64;
+    pub const DEFAULT_INSTRUCTIONS: usize = 32;
 }
 
 pub mod finalbrain {
@@ -40,7 +40,7 @@ pub mod finalbrain {
     pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub const DEFAULT_INSTRUCTIONS: usize = 64;
+    pub const DEFAULT_INSTRUCTIONS: usize = 256;
 }
 
 pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 1000;
@@ -56,9 +56,9 @@ pub enum Ins {
     DIV,
     GRT,
     LES,
-    /*EQL,
+    EQL,
     NEQ,
-    SIN,
+    /*SIN,
     COS,
     SQT,*/
     MAX,
@@ -85,7 +85,7 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
         } else {
             0
         },
-        /*Ins::EQL => if a == b {
+        Ins::EQL => if a == b {
             1
         } else {
             0
@@ -95,7 +95,7 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
         } else {
             0
         },
-        Ins::SIN => ((a as f64 / b as f64).sin() * b as f64) as i64,
+        /*Ins::SIN => ((a as f64 / b as f64).sin() * b as f64) as i64,
         Ins::COS => ((a as f64 / b as f64).cos() * b as f64) as i64,
         Ins::SQT => ((a as f64 / b as f64).sqrt() * b as f64) as i64,*/
         Ins::MAX => unreachable!(),
