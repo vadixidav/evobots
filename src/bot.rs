@@ -43,10 +43,10 @@ pub mod finalbrain {
     pub const DEFAULT_INSTRUCTIONS: usize = 256;
 }
 
-pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 1000;
-pub const EXISTENCE_COST: i64 = 500;
-pub const MAX_ENERGY: i64 = 65536;
-static DEFAULT_ENERGY: i64 = 16384;
+pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 3000;
+pub const EXISTENCE_COST: i64 = 600;
+pub const MAX_ENERGY: i64 = 1<<18;
+static DEFAULT_ENERGY: i64 = 8192;
 
 #[derive(Clone)]
 pub enum Ins {

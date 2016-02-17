@@ -12,16 +12,18 @@ use itertools::*;
 const SEPARATION_MAGNITUDE: f64 = 0.1;
 const REPULSION_MAGNITUDE: f64 = 200.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
-const BOT_GRAVITATION_MAGNITUDE: f64 = -1.0;
+const BOT_GRAVITATION_MAGNITUDE: f64 = -0.2;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
-const SPAWN_RATE: f64 = 0.03;
+const SPAWN_RATE: f64 = 0.04;
 const CONNECT_PROBABILITY: f64 = 1.0;
-const CONNECT_MAX_LENGTH: f64 = 150.0;
-const CONNECT_MIN_LENGTH: f64 = 30.0;
-const FRAME_PHYSICS_PERIOD: u64 = 2;
+const CONNECT_MAX_LENGTH: f64 = 120.0;
+const CONNECT_MIN_LENGTH: f64 = 26.0;
+const FRAME_PHYSICS_PERIOD: u64 = 1;
 
 const STARTING_POSITION: f32 = 600.0;
 const MOVE_SPEED: f32 = 1.0;
+
+const NODE_STARTING_ENERGY: i64 = 200000;
 
 use na::{ToHomogeneous, Translation, Rotation};
 
@@ -52,7 +54,7 @@ fn main() {
     let glowy = gg::Renderer::new(&display);
 
     let mut deps = petgraph::Graph::<Node, bool, petgraph::Undirected>::new_undirected();
-    deps.add_node(Node::new(50000, zoom::BasicParticle::default()));
+    deps.add_node(Node::new(NODE_STARTING_ENERGY, zoom::BasicParticle::default()));
 
     let central = zoom::BasicParticle::new(1.0, Vec3::zero(), Vec3::zero(), 1.0);
 
