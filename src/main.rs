@@ -16,7 +16,6 @@ const REPULSION_MAGNITUDE: f64 = 500.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
 const BOT_GRAVITATION_MAGNITUDE: f64 = 0.1;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
-const SPAWN_RATE: f64 = 0.005;
 const CONNECT_PROBABILITY: f64 = 0.5;
 const CONNECT_MAX_LENGTH: f64 = 2500.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
@@ -25,7 +24,11 @@ const FRAME_PHYSICS_PERIOD: u64 = 1;
 const STARTING_POSITION: f32 = 600.0;
 const MOVE_SPEED: f32 = 5.0;
 
+const SPAWN_RATE: f64 = 0.005;
 const NODE_STARTING_ENERGY: i64 = 200000;
+
+const EDGE_FALLOFF: f32 = 0.05;
+const NODE_FALLOFF: f32 = 0.25;
 
 use na::{ToHomogeneous, Translation, Rotation};
 
@@ -415,7 +418,7 @@ fn main() {
                 gg::Node{
                     position: vec_to_spos(n.particle.p.position),
                     color: n.color(),
-                    falloff: 0.25,
+                    falloff: NODE_FALLOFF,
                     radius: n.radius(),
                 }
             ).collect_vec()[..]);
@@ -431,13 +434,13 @@ fn main() {
                     std::iter::once(gg::Node{
                         position: vec_to_spos(nodes.0.particle.p.position),
                         color: nodes.0.color(),
-                        falloff: 0.1,
+                        falloff: EDGE_FALLOFF,
                         radius: nodes.0.radius(),
                     }).chain(
                     std::iter::once(gg::Node{
                         position: vec_to_spos(nodes.1.particle.p.position),
                         color: nodes.1.color(),
-                        falloff: 0.1,
+                        falloff: EDGE_FALLOFF,
                         radius: nodes.1.radius(),
                     }))
                 }
