@@ -3,10 +3,10 @@ extern crate zoom;
 use super::bot::*;
 use super::Vec3;
 
-static BOTS_RADIUS_MULTIPLIER: f32 = 0.4;
+static BOTS_RADIUS_MULTIPLIER: f32 = 1.0;
 static RADIUS_STATIC: f32 = 5.0;
-static ENERGY_RATIO: f64 = 0.003;
-pub static ENERGY_THRESHOLD: i64 = 20000000;
+static ENERGY_RATIO: f64 = 0.002;
+pub static ENERGY_THRESHOLD: i64 = 500000;
 
 static DRAG: f64 = 0.1;
 
@@ -66,6 +66,7 @@ pub struct Node {
     pub moved_bots: Vec<Box<Bot>>,
     pub deaths: i64,
     pub moves: i64,
+    pub connections: i64,
 }
 
 impl Node {
@@ -77,6 +78,7 @@ impl Node {
             moved_bots: Vec::new(),
             deaths: 0,
             moves: 0,
+            connections: 0,
         }
     }
 

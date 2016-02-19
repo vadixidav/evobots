@@ -5,46 +5,46 @@ use self::rand::Rng;
 pub type R = rand::isaac::Isaac64Rng;
 
 pub mod nodebrain {
-    //0, 1, 2, -1, node energy, bot count, present node bot count, self energy, and memory are inputs.
-    pub const STATIC_INPUTS: usize = 8;
-    pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
-    pub const TOTAL_OUTPUTS: usize = 5;
-    pub const DEFAULT_MUTATE_SIZE: usize = 30;
-    pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub const DEFAULT_INSTRUCTIONS: usize = 32;
-}
-
-pub mod botbrain {
-    //0, 1, 2, -1, node energy, bot count, self energy, bot energy, bot signal, and memory are inputs.
+    //0, 1, 2, -1, rand, node energy, bot count, present node bot count, self energy, and memory are inputs.
     pub const STATIC_INPUTS: usize = 9;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub const DEFAULT_INSTRUCTIONS: usize = 32;
+    pub const DEFAULT_INSTRUCTIONS: usize = 64;
+}
+
+pub mod botbrain {
+    //0, 1, 2, -1, rand, node energy, bot count, self energy, bot energy, bot signal, and memory are inputs.
+    pub const STATIC_INPUTS: usize = 10;
+    pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
+    pub const TOTAL_OUTPUTS: usize = 5;
+    pub const DEFAULT_MUTATE_SIZE: usize = 30;
+    pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
+    pub const DEFAULT_INSTRUCTIONS: usize = 64;
 }
 
 pub mod finalbrain {
     pub const TOTAL_BOT_INPUTS: usize = 4;
     pub const TOTAL_NODE_INPUTS: usize = 4;
     pub const TOTAL_MEMORY: usize = 4;
-    //0, 1, 2, -1, present node energy, bot count, self energy, self index, and memory are inputs
-    pub const STATIC_INPUTS: usize = 8;
+    //0, 1, 2, -1, rand, present node energy, bot count, self energy, self index, and memory are inputs
+    pub const STATIC_INPUTS: usize = 9;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + TOTAL_MEMORY +
         //Add inputs for all the node brains
         TOTAL_NODE_INPUTS * super::nodebrain::TOTAL_OUTPUTS +
         //Add inputs for all the bot brains
         TOTAL_BOT_INPUTS * super::botbrain::TOTAL_OUTPUTS;
-    //Mate, Node, Energy Rate (as a sigmoid)
-    pub const STATIC_OUTPUTS: usize = 3;
+    //Mate, Node, Energy Rate (as a sigmoid), Signal
+    pub const STATIC_OUTPUTS: usize = 4;
     pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
     pub const DEFAULT_INSTRUCTIONS: usize = 256;
 }
 
-pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 3000;
-pub const EXISTENCE_COST: i64 = 600;
+pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 1000;
+pub const EXISTENCE_COST: i64 = 100;
 pub const MAX_ENERGY: i64 = 1<<18;
 static DEFAULT_ENERGY: i64 = 8192;
 
@@ -54,13 +54,17 @@ pub enum Ins {
     SUB,
     MUL,
     DIV,
+    MOD,
     GRT,
     LES,
     EQL,
     NEQ,
-    /*SIN,
+    AND,
+    OR,
+    EXP,
+    SIN,
     COS,
-    SQT,*/
+    SQT,
     MAX,
 }
 
@@ -73,6 +77,13 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
             match a.checked_div(b) {
                 Some(v) => v,
                 None => 0,
+            }
+        },
+        Ins::MOD => {
+            if b == 0 {
+                0
+            } else {
+                a.wrapping_rem(b)
             }
         },
         Ins::GRT => if a > b {
@@ -95,9 +106,20 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
         } else {
             0
         },
-        /*Ins::SIN => ((a as f64 / b as f64).sin() * b as f64) as i64,
+        Ins::AND => if a != 0 && b != 0 {
+            1
+        } else {
+            0
+        },
+        Ins::OR => if a != 0 || b != 0 {
+            1
+        } else {
+            0
+        },
+        Ins::EXP => (a as f64).powf(b as f64) as i64,
+        Ins::SIN => ((a as f64 / b as f64).sin() * b as f64) as i64,
         Ins::COS => ((a as f64 / b as f64).cos() * b as f64) as i64,
-        Ins::SQT => ((a as f64 / b as f64).sqrt() * b as f64) as i64,*/
+        Ins::SQT => ((a as f64 / b as f64).sqrt() * b as f64) as i64,
         Ins::MAX => unreachable!(),
     }
 }
@@ -113,6 +135,7 @@ pub struct Decision {
     pub node: i64,
     //This will be ran through a sigmoid
     pub rate: i64,
+    pub signal: i64,
 }
 
 impl Default for Decision {
@@ -121,6 +144,7 @@ impl Default for Decision {
             mate: -1,
             node: -1,
             rate: 0,
+            signal: 0,
         }
     }
 }
@@ -139,17 +163,17 @@ pub struct Bot {
 impl Bot {
     pub fn new(rng: &mut R) -> Self {
         let bvec = (0..botbrain::DEFAULT_INSTRUCTIONS).map(|_| {
-                let mut ins = Ins::ADD;
+                let mut ins = Ins::LES;
                 mutator(&mut ins, rng);
                 ins
             }).collect::<Vec<_>>();
         let nvec = (0..nodebrain::DEFAULT_INSTRUCTIONS).map(|_| {
-                let mut ins = Ins::ADD;
+                let mut ins = Ins::LES;
                 mutator(&mut ins, rng);
                 ins
             }).collect::<Vec<_>>();
         let fvec = (0..finalbrain::DEFAULT_INSTRUCTIONS).map(|_| {
-                let mut ins = Ins::ADD;
+                let mut ins = Ins::LES;
                 mutator(&mut ins, rng);
                 ins
             }).collect::<Vec<_>>();
@@ -221,5 +245,6 @@ impl Bot {
 
     pub fn cycle(&mut self) {
         self.energy -= EXISTENCE_COST;
+        self.signal = self.decision.signal;
     }
 }
