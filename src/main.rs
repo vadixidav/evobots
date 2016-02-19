@@ -11,6 +11,7 @@ use itertools::*;
 
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.05;
+const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
 const REPULSION_MAGNITUDE: f64 = 500.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
@@ -186,9 +187,9 @@ fn main() {
 
                 //Move the particles far enough away from each other so they can stay connected
                 deps[i].particle.p.position =
-                    deps[i].particle.p.position/* + rand_unit_dir * CONNECT_MIN_LENGTH*/;
+                    deps[i].particle.p.position + rand_unit_dir * SEPARATION_DELTA;
                 deps[newindex].particle.p.position =
-                    deps[newindex].particle.p.position/* - rand_unit_dir * CONNECT_MIN_LENGTH*/;
+                    deps[newindex].particle.p.position - rand_unit_dir * SEPARATION_DELTA;
             }
 
             while let Some(&Rank{rank: ri, ..}) = spawn_places.peek() {
