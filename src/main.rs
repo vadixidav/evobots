@@ -31,8 +31,9 @@ const ENERGY_CUTOFF_AT: usize = 1500;
 const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
-const NEW_NODE_SPAWNS: usize = 2;
-const MUTATION_RATE: f64 = 0.0001;
+const NEW_NODE_SPAWNS: usize = 0;
+//Cycle mutation rate; always mutates on division either way
+const MUTATION_RATE: f64 = 0.0;
 //The rate at which a bot will be spawned in empty nodes when the mesh is full
 const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.01;
 
