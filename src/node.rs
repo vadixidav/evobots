@@ -101,11 +101,7 @@ impl Node {
 
     pub fn color(&self) -> [f32; 4] {
         [
-            if self.bots.len() == 0 {
-                0.0
-            } else {
-                self.deaths as f32 / self.bots.len() as f32
-            },
+            1.0 - self.energy as f32 / ENERGY_THRESHOLD as f32,
             self.energy as f32 / ENERGY_THRESHOLD as f32,
             if self.bots.len() == 0 {
                 0.0
