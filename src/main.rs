@@ -24,10 +24,11 @@ const FRAME_PHYSICS_PERIOD: u64 = 1;
 
 const STARTING_POSITION: f32 = 600.0;
 const MOVE_SPEED: f32 = 5.0;
+const ROTATION_RATE: f32 = 0.005;
 
 const START_SPAWNING_AT: i64 = 50000;
 //Energy stops being generated after this many nodes exist
-const ENERGY_CUTOFF_AT: usize = 1500;
+const ENERGY_CUTOFF_AT: usize = 2000;
 const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
@@ -302,6 +303,8 @@ fn main() {
                         node_inputs[6] = n.bots.len() as i64;
                         node_inputs[7] = pnode.bots.len() as i64;
                         node_inputs[8] = pnode.bots[ib].energy;
+                        node_inputs[9] = pnode.connections;
+                        node_inputs[10] = n.connections;
                         node_inputs[nodebrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
                         let mut compute = pnode.bots[ib].node_brain.compute(&node_inputs[..]);
@@ -330,6 +333,7 @@ fn main() {
                         bot_inputs[7] = pnode.bots[ib].energy;
                         bot_inputs[8] = ob.energy;
                         bot_inputs[9] = ob.signal;
+                        bot_inputs[10] = pnode.connections;
                         bot_inputs[botbrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
                         let mut compute = pnode.bots[ib].bot_brain.compute(&bot_inputs[..]);
@@ -357,6 +361,7 @@ fn main() {
                     final_inputs[6] = pnode.bots.len() as i64;
                     final_inputs[7] = pnode.bots[ib].energy;
                     final_inputs[8] = ib as i64;
+                    final_inputs[9] = pnode.connections;
                     final_inputs[finalbrain::STATIC_INPUTS..].iter_mut().set_from(
                         pnode.bots[ib].memory.iter().cloned().chain(
                             //Provide the highest ranking node inputs
@@ -505,8 +510,8 @@ fn main() {
                 glium::glutin::Event::MouseMoved((x, y)) => {
                     let (dimx, dimy) = display.get_framebuffer_dimensions();
                     let (hdimx, hdimy) = (dimx/2, dimy/2);
-                    movement.append_rotation_mut(&na::Vec3::new(-(y - hdimy as i32) as f32 / 192.0,
-                        (x - hdimx as i32) as f32 / 192.0, 0.0));
+                    movement.append_rotation_mut(&na::Vec3::new(-(y - hdimy as i32) as f32 * ROTATION_RATE,
+                        (x - hdimx as i32) as f32 * ROTATION_RATE, 0.0));
                     window.set_cursor_position(hdimx as i32, hdimy as i32).ok().unwrap();
                 },
                 _ => ()
