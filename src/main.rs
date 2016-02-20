@@ -26,12 +26,15 @@ const STARTING_POSITION: f32 = 600.0;
 const MOVE_SPEED: f32 = 5.0;
 
 const START_SPAWNING_AT: i64 = 50000;
+//Energy stops being generated after this many nodes exist
 const ENERGY_CUTOFF_AT: usize = 1500;
 const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
-const NEW_NODE_SPAWNS: usize = 8;
+const NEW_NODE_SPAWNS: usize = 2;
 const MUTATION_RATE: f64 = 0.0001;
+//The rate at which a bot will be spawned in empty nodes when the mesh is full
+const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.01;
 
 const EDGE_FALLOFF: f32 = 0.05;
 const NODE_FALLOFF: f32 = 0.25;
@@ -134,6 +137,12 @@ fn main() {
                 n.advance();
                 if nc < ENERGY_CUTOFF_AT {
                     n.grow();
+                } else {
+                    if n.bots.len() == 0 {
+                        if rng.gen_range(0.0, 1.0) < EMPTY_NODE_FULL_MESH_SPAWN_RATE {
+                            n.bots.push(Box::new(Bot::new(&mut rng)));
+                        }
+                    }
                 }
             }
         }
