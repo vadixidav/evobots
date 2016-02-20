@@ -202,6 +202,13 @@ impl Bot {
         }
     }
 
+    pub fn mutate(&mut self, rng: &mut R) {
+        use mli::Genetic;
+        self.bot_brain.mutate(rng);
+        self.node_brain.mutate(rng);
+        self.final_brain.mutate(rng);
+    }
+
     pub fn mate(&mut self, other: &Self, rng: &mut R) -> Self {
         use mli::Genetic;
         //Divide energy in half when mating for the mater
@@ -216,9 +223,7 @@ impl Bot {
             decision: self.decision.clone(),
         };
         //Perform unit mutations on offspring
-        b.bot_brain.mutate(rng);
-        b.node_brain.mutate(rng);
-        b.final_brain.mutate(rng);
+        b.mutate(rng);
         b
     }
 

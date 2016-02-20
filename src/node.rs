@@ -82,9 +82,12 @@ impl Node {
         }
     }
 
+    pub fn grow(&mut self) {
+        self.energy += (self.energy as f64 * ENERGY_RATIO) as i64;
+    }
+
     pub fn advance(&mut self) {
         use zoom::{Particle, PhysicsParticle};
-        self.energy += (self.energy as f64 * ENERGY_RATIO) as i64;
         self.particle.drag(DRAG);
         self.particle.advance(1.0);
     }

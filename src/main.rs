@@ -25,8 +25,13 @@ const FRAME_PHYSICS_PERIOD: u64 = 1;
 const STARTING_POSITION: f32 = 600.0;
 const MOVE_SPEED: f32 = 5.0;
 
-const SPAWN_RATE: f64 = 0.005;
+const START_SPAWNING_AT: i64 = 50000;
+const ENERGY_CUTOFF_AT: usize = 1500;
+const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
+//const FINAL_SPAWN_CYCLE: u64 = 0;
+const NEW_NODE_SPAWNS: usize = 8;
+const MUTATION_RATE: f64 = 0.0001;
 
 const EDGE_FALLOFF: f32 = 0.05;
 const NODE_FALLOFF: f32 = 0.25;
@@ -95,6 +100,9 @@ fn main() {
 
         let matr = movement.to_homogeneous() * 3.0;
 
+        //Print things out
+        println!("Nodes: {}, Edges: {}", deps.node_count(), deps.edge_count());
+
         //Update forces between nodes on the correct periods
         if period % FRAME_PHYSICS_PERIOD == 0 {
             for i in deps.edge_indices() {
@@ -121,8 +129,12 @@ fn main() {
                 }
             }
 
+            let nc = deps.node_count();
             for n in deps.node_weights_mut() {
                 n.advance();
+                if nc < ENERGY_CUTOFF_AT {
+                    n.grow();
+                }
             }
         }
 
@@ -190,6 +202,12 @@ fn main() {
                     deps[i].particle.p.position + rand_unit_dir * SEPARATION_DELTA;
                 deps[newindex].particle.p.position =
                     deps[newindex].particle.p.position - rand_unit_dir * SEPARATION_DELTA;
+
+                //Add new bots to the nodes
+                for _ in 0..NEW_NODE_SPAWNS {
+                    deps[i].bots.push(Box::new(Bot::new(&mut rng)));
+                    deps[newindex].bots.push(Box::new(Bot::new(&mut rng)));
+                }
             }
 
             while let Some(&Rank{rank: ri, ..}) = spawn_places.peek() {
@@ -405,6 +423,9 @@ fn main() {
             n.deaths = 0;
             for ib in (0..n.bots.len()).rev() {
                 n.bots[ib].cycle();
+                if rng.gen_range(0.0, 1.0) < MUTATION_RATE {
+                    n.bots[ib].mutate(&mut rng);
+                }
                 //Remove any dead bots
                 if n.bots[ib].energy <= 0 {
                     n.bots.swap_remove(ib);
