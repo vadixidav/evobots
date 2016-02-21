@@ -149,7 +149,9 @@ fn main() {
                                 //If so do a search beteen their bots
                                 for b1 in &nodes[i].weight.bots {
                                     for b2 in &nodes[j].weight.bots {
-                                        if b1.connect_signal != 0 && b1.connect_signal == b2.connect_signal {
+                                        if b1.connect_signal != 0 && b1.connect_signal != 1 &&
+                                            b1.connect_signal != -1 &&
+                                            b1.connect_signal == b2.connect_signal {
                                             connect_plans.last_mut().unwrap().push(j);
                                         }
                                     }
