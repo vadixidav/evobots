@@ -1,4 +1,5 @@
 extern crate zoom;
+extern crate rand;
 
 use super::bot::*;
 use super::Vec3;
@@ -6,6 +7,7 @@ use super::Vec3;
 static BOTS_RADIUS_MULTIPLIER: f32 = 10.0;
 static RADIUS_STATIC: f32 = 5.0;
 static ENERGY_RATIO: f64 = 0.002;
+static ENERGY_VARIATION: f64 = 0.1;
 pub static ENERGY_THRESHOLD: i64 = 500000;
 
 static DRAG: f64 = 0.1;
@@ -82,8 +84,10 @@ impl Node {
         }
     }
 
-    pub fn grow(&mut self) {
-        self.energy = self.energy.saturating_add((self.energy as f64 * ENERGY_RATIO) as i64);
+    pub fn grow(&mut self, rng: &mut rand::Isaac64Rng) {
+        use rand::Rng;
+        self.energy = self.energy.saturating_add((self.energy as f64 * ENERGY_RATIO *
+            (1.0 + rng.gen_range(-ENERGY_VARIATION, ENERGY_VARIATION))) as i64);
     }
 
     pub fn advance(&mut self) {

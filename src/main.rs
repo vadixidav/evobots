@@ -28,7 +28,7 @@ const ROTATION_RATE: f32 = 0.005;
 
 const START_SPAWNING_AT: i64 = 50000;
 //Energy stops being generated after this many nodes exist
-const ENERGY_CUTOFF_AT: usize = 1900;
+const ENERGY_CUTOFF_AT: usize = 2000;
 const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
@@ -142,7 +142,7 @@ fn main() {
             for n in deps.node_weights_mut() {
                 n.advance();
                 if nc < ENERGY_CUTOFF_AT {
-                    n.grow();
+                    n.grow(&mut rng);
                 } else {
                     if n.bots.len() == 0 {
                         if rng.gen_range(0.0, 1.0) < EMPTY_NODE_FULL_MESH_SPAWN_RATE {
