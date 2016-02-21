@@ -71,7 +71,7 @@ fn main() {
     //window.set_cursor_state(glium::glutin::CursorState::Hide).ok().unwrap();
     let glowy = gg::Renderer::new(&display);
 
-    let mut deps = petgraph::Graph::<Node, bool, _>::new_undirected();
+    let mut deps: petgraph::Graph<Node, bool, petgraph::Undirected> = petgraph::Graph::new_undirected();
 
     let central = zoom::BasicParticle::new(1.0, Vec3::zero(), Vec3::zero(), 1.0);
 
