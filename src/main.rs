@@ -36,7 +36,7 @@ const NEW_NODE_SPAWNS: usize = 0;
 //Cycle mutation rate; always mutates on division either way
 const MUTATION_RATE: f64 = 0.0;
 //The rate at which a bot will be spawned in empty nodes when the mesh is full
-const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 1.0;
+const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.01;
 
 const EDGE_FALLOFF: f32 = 0.05;
 const NODE_FALLOFF: f32 = 0.25;
