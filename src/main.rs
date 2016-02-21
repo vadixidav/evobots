@@ -70,7 +70,10 @@ fn main() {
     .with_fullscreen(glium::glutin::get_available_monitors().next().unwrap())
     .build_glium().unwrap();
     let window = display.get_window().unwrap();
-    //window.set_cursor_state(glium::glutin::CursorState::Hide).ok().unwrap();
+    match window.set_cursor_state(glium::glutin::CursorState::Hide).ok() {
+        Some(_) => {},
+        None => println!("Cursor hide not available on this platform, starting without it"),
+    }
     let glowy = gg::Renderer::new(&display);
     let mut focus_state = true;
 
