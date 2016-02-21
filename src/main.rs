@@ -18,7 +18,7 @@ const ATTRACTION_MAGNITUDE: f64 = 0.001;
 const BOT_GRAVITATION_MAGNITUDE: f64 = 0.1;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 const CONNECT_PROBABILITY: f64 = 0.5;
-const CONNECT_MAX_LENGTH: f64 = 2500.0;
+const CONNECT_MAX_LENGTH: f64 = 5000.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 const FRAME_PHYSICS_PERIOD: u64 = 1;
 
@@ -70,7 +70,6 @@ fn main() {
     let glowy = gg::Renderer::new(&display);
 
     let mut deps = petgraph::Graph::<Node, bool, petgraph::Undirected>::new_undirected();
-    deps.add_node(Node::new(NODE_STARTING_ENERGY, zoom::BasicParticle::default()));
 
     let central = zoom::BasicParticle::new(1.0, Vec3::zero(), Vec3::zero(), 1.0);
 
@@ -107,6 +106,11 @@ fn main() {
 
         //Print things out
         println!("Nodes: {}, Edges: {}", deps.node_count(), deps.edge_count());
+
+        //Add node if none exist
+        if deps.node_count() == 0 {
+            deps.add_node(Node::new(NODE_STARTING_ENERGY, zoom::BasicParticle::default()));
+        }
 
         //Update forces between nodes on the correct periods
         if period % FRAME_PHYSICS_PERIOD == 0 {
