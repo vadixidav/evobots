@@ -549,9 +549,14 @@ fn main() {
                 glium::glutin::Event::MouseMoved((x, y)) => {
                     let (dimx, dimy) = display.get_framebuffer_dimensions();
                     let (hdimx, hdimy) = (dimx/2, dimy/2);
-                    movement.append_rotation_mut(&na::Vec3::new(-(y - hdimy as i32) as f32 * ROTATION_RATE,
-                        (x - hdimx as i32) as f32 * ROTATION_RATE, 0.0));
-                    window.set_cursor_position(hdimx as i32, hdimy as i32).ok().unwrap();
+                    match window.set_cursor_state(glium::glutin::CursorState::Grab) {
+                        Ok(_) => {
+                            movement.append_rotation_mut(&na::Vec3::new(-(y - hdimy as i32) as f32 * ROTATION_RATE,
+                                (x - hdimx as i32) as f32 * ROTATION_RATE, 0.0));
+                            window.set_cursor_position(hdimx as i32, hdimy as i32).ok().unwrap();
+                        },
+                        Err(_) => println!("We couldnt grab"),
+                    }
                 },
                 _ => ()
             }
