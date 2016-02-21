@@ -88,7 +88,6 @@ fn main() {
         window.set_cursor_position(hdimx as i32, hdimy as i32).ok().unwrap();
     }
 
-    let perspective = *na::Persp3::new(16.0/9.0, 1.0, 0.0, 500.0).to_mat().as_ref();
     let mut movement = na::Iso3::<f32>::new(
         na::Vec3::new(0.0, 0.0, STARTING_POSITION),
         na::Vec3::new(0.0, 0.0, 0.0),
@@ -491,6 +490,11 @@ fn main() {
                 }
             }
         }
+
+        //Update perspective every frame
+        let fbdim = window.get_inner_size_pixels().unwrap();
+        let perspective = *na::Persp3::new((fbdim.0 as f32)/(fbdim.1 as f32),
+            1.0, 0.0, 500.0).to_mat().as_ref();
 
         //Render nodes
         glowy.render_nodes(&mut target, matr.as_ref(), &perspective,
