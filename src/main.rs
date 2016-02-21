@@ -22,13 +22,13 @@ const CONNECT_MAX_LENGTH: f64 = 5000.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 const FRAME_PHYSICS_PERIOD: u64 = 1;
 
-const STARTING_POSITION: f32 = 600.0;
+const STARTING_POSITION: f32 = 1000.0;
 const MOVE_SPEED: f32 = 5.0;
 const ROTATION_RATE: f32 = 0.005;
 
 const START_SPAWNING_AT: i64 = 50000;
 //Energy stops being generated after this many nodes exist
-const ENERGY_CUTOFF_AT: usize = 2000;
+const ENERGY_CUTOFF_AT: usize = 1900;
 const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
@@ -36,7 +36,7 @@ const NEW_NODE_SPAWNS: usize = 0;
 //Cycle mutation rate; always mutates on division either way
 const MUTATION_RATE: f64 = 0.0;
 //The rate at which a bot will be spawned in empty nodes when the mesh is full
-const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.01;
+const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.0004;
 
 const EDGE_FALLOFF: f32 = 0.05;
 const NODE_FALLOFF: f32 = 0.25;
@@ -62,7 +62,7 @@ fn main() {
     use glium::DisplayBuild;
     use num::Zero;
     use rand::{SeedableRng, Rng};
-    let mut rng = rand::Isaac64Rng::from_seed(&[50, 2, 2, 4]);
+    let mut rng = rand::Isaac64Rng::from_seed(&[51, 2, 2, 4]);
 
     let display = glium::glutin::WindowBuilder::new().with_vsync().build_glium().unwrap();
     let window = display.get_window().unwrap();
@@ -430,9 +430,9 @@ fn main() {
             for b in n.bots.iter_mut() {
                 use num::Float;
                 let asking = ((1.0/(1.0 + (b.decision.rate as f64).exp()) - 0.5) * ENERGY_EXCHANGE_MAGNITUDE as f64) as i64;
-                b.energy += asking;
-                n.energy -= asking;
-                if b.energy > MAX_ENERGY {
+                b.energy = b.energy.saturating_add(asking);
+                n.energy = n.energy.saturating_sub(asking);
+                if b.energy > MAX_ENERGY - asking {
                     b.energy = MAX_ENERGY;
                 }
             }

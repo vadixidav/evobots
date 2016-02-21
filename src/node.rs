@@ -83,7 +83,7 @@ impl Node {
     }
 
     pub fn grow(&mut self) {
-        self.energy += (self.energy as f64 * ENERGY_RATIO) as i64;
+        self.energy = self.energy.saturating_add((self.energy as f64 * ENERGY_RATIO) as i64);
     }
 
     pub fn advance(&mut self) {

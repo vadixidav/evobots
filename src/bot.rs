@@ -249,7 +249,7 @@ impl Bot {
     }
 
     pub fn cycle(&mut self) {
-        self.energy -= EXISTENCE_COST;
+        self.energy = self.energy.saturating_sub(EXISTENCE_COST);
         self.signal = self.decision.signal;
     }
 }
