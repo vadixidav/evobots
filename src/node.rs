@@ -100,7 +100,17 @@ impl Node {
         self.energy >= ENERGY_THRESHOLD
     }
     pub fn should_obliterate(&self) -> bool {
-        self.energy <= 0
+        use std::num::FpCategory;
+        use zoom::Position;
+        let clos = |x: f64| {
+            match x.classify() {
+                FpCategory::Nan | FpCategory::Infinite => true,
+                _ => false,
+            }
+        };
+        self.energy <= 0 || match self.particle.position() {
+            Vec3{x, y, z} => {clos(x) || clos(y) || clos(z)}
+        }
     }
 
     pub fn color(&self) -> [f32; 4] {

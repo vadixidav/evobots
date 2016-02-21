@@ -170,7 +170,6 @@ fn main() {
 
             let nc = deps.node_count();
             for n in deps.node_weights_mut() {
-                n.advance();
                 if nc < ENERGY_CUTOFF_AT {
                     n.grow(&mut rng);
                 } else {
@@ -267,6 +266,7 @@ fn main() {
 
         //Update obliteration
         for i in deps.node_indices().rev() {
+            deps[i].advance();
             if deps[i].should_obliterate() {
                 let neighbors = deps.neighbors(i).collect_vec();
                 for ix in 0..neighbors.len() {
