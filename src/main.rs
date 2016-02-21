@@ -66,7 +66,9 @@ fn main() {
     use rand::{SeedableRng, Rng};
     let mut rng = rand::Isaac64Rng::from_seed(&[51, 2, 2, 4]);
 
-    let display = glium::glutin::WindowBuilder::new().with_vsync().build_glium().unwrap();
+    let display = glium::glutin::WindowBuilder::new().with_vsync()
+    .with_fullscreen(glium::glutin::get_available_monitors().next().unwrap())
+    .build_glium().unwrap();
     let window = display.get_window().unwrap();
     //window.set_cursor_state(glium::glutin::CursorState::Hide).ok().unwrap();
     let glowy = gg::Renderer::new(&display);
@@ -82,7 +84,7 @@ fn main() {
         window.set_cursor_position(hdimx as i32, hdimy as i32).ok().unwrap();
     }
 
-    let perspective = *na::Persp3::new(1.5, 1.0, 0.0, 500.0).to_mat().as_ref();
+    let perspective = *na::Persp3::new(16.0/9.0, 1.0, 0.0, 500.0).to_mat().as_ref();
     let mut movement = na::Iso3::<f32>::new(
         na::Vec3::new(0.0, 0.0, STARTING_POSITION),
         na::Vec3::new(0.0, 0.0, 0.0),
