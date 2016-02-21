@@ -5,8 +5,8 @@ use self::rand::Rng;
 pub type R = rand::isaac::Isaac64Rng;
 
 pub mod nodebrain {
-    //0, 1, 2, -1, rand, node energy, bot count, present node bot count, self energy, present node connections, node connections, and memory are inputs.
-    pub const STATIC_INPUTS: usize = 11;
+    //0, 1, 2, -1, max, rand, node energy, bot count, present node bot count, self energy, present node connections, node connections, and memory are inputs.
+    pub const STATIC_INPUTS: usize = 12;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
@@ -15,8 +15,8 @@ pub mod nodebrain {
 }
 
 pub mod botbrain {
-    //0, 1, 2, -1, rand, node energy, bot count, self energy, bot energy, bot signal, present node connections, and memory are inputs.
-    pub const STATIC_INPUTS: usize = 11;
+    //0, 1, 2, -1, max, rand, node energy, bot count, self energy, bot energy, bot signal, present node connections, and memory are inputs.
+    pub const STATIC_INPUTS: usize = 12;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
@@ -28,15 +28,15 @@ pub mod finalbrain {
     pub const TOTAL_BOT_INPUTS: usize = 4;
     pub const TOTAL_NODE_INPUTS: usize = 4;
     pub const TOTAL_MEMORY: usize = 4;
-    //0, 1, 2, -1, rand, present node energy, bot count, self energy, self index, present node connections, and memory are inputs
-    pub const STATIC_INPUTS: usize = 10;
+    //0, 1, 2, -1, max, rand, present node energy, bot count, self energy, self index, present node connections, and memory are inputs
+    pub const STATIC_INPUTS: usize = 11;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + TOTAL_MEMORY +
         //Add inputs for all the node brains
         TOTAL_NODE_INPUTS * super::nodebrain::TOTAL_OUTPUTS +
         //Add inputs for all the bot brains
         TOTAL_BOT_INPUTS * super::botbrain::TOTAL_OUTPUTS;
-    //Mate, Node, Energy Rate (as a sigmoid), Signal
-    pub const STATIC_OUTPUTS: usize = 4;
+    //Mate, Node, Energy Rate (as a sigmoid), Signal, Connect Signal
+    pub const STATIC_OUTPUTS: usize = 5;
     pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
@@ -136,6 +136,7 @@ pub struct Decision {
     //This will be ran through a sigmoid
     pub rate: i64,
     pub signal: i64,
+    pub connect_signal: i64,
 }
 
 impl Default for Decision {
@@ -145,6 +146,7 @@ impl Default for Decision {
             node: -1,
             rate: 0,
             signal: 0,
+            connect_signal: 0,
         }
     }
 }
@@ -156,6 +158,7 @@ pub struct Bot {
     pub final_brain: mli::Mep<Ins, R, i64, fn(&mut Ins, &mut R), fn(&Ins, i64, i64) -> i64>,
     pub energy: i64,
     pub signal: i64,
+    pub connect_signal: i64,
     pub memory: [i64; finalbrain::TOTAL_MEMORY],
     pub decision: Decision,
 }
@@ -196,6 +199,7 @@ impl Bot {
             energy: DEFAULT_ENERGY,
 
             signal: 0,
+            connect_signal: 0,
 
             memory: [0; finalbrain::TOTAL_MEMORY],
             decision: Default::default(),
@@ -219,6 +223,7 @@ impl Bot {
             final_brain: mli::Genetic::mate((&self.final_brain, &other.final_brain), rng),
             energy: self.energy,
             signal: self.signal,
+            connect_signal: 0,
             memory: self.memory,
             decision: self.decision.clone(),
         };
@@ -237,6 +242,7 @@ impl Bot {
             final_brain: self.final_brain.clone(),
             energy: self.energy,
             signal: self.signal,
+            connect_signal: 0,
             memory: self.memory,
             //Clone the rate of energy consumption in the decision
             decision: self.decision.clone(),
@@ -251,5 +257,6 @@ impl Bot {
     pub fn cycle(&mut self) {
         self.energy = self.energy.saturating_sub(EXISTENCE_COST);
         self.signal = self.decision.signal;
+        self.connect_signal = self.decision.connect_signal;
     }
 }

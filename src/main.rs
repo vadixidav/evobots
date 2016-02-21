@@ -20,6 +20,8 @@ const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 const CONNECT_PROBABILITY: f64 = 0.5;
 const CONNECT_MAX_LENGTH: f64 = 5000.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
+//The length within which bots can connect their nodes together by choice
+const BOT_COICE_CONNECT_LENGTH: f64 = 500.0;
 const FRAME_PHYSICS_PERIOD: u64 = 1;
 
 const STARTING_POSITION: f32 = 1000.0;
@@ -36,7 +38,7 @@ const NEW_NODE_SPAWNS: usize = 0;
 //Cycle mutation rate; always mutates on division either way
 const MUTATION_RATE: f64 = 0.0;
 //The rate at which a bot will be spawned in empty nodes when the mesh is full
-const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.0004;
+const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.002;
 
 const EDGE_FALLOFF: f32 = 0.05;
 const NODE_FALLOFF: f32 = 0.25;
@@ -125,15 +127,43 @@ fn main() {
 
             //Update particle forces between each node
             {
-                let nodes = deps.raw_nodes();
-                for i in 0..nodes.len() {
-                    use zoom::PhysicsParticle;
-                    nodes[i].weight.particle.hooke_to(&central, PULL_CENTER_MAGNITUDE);
-                    for j in (i+1)..nodes.len() {
-                        //Apply repulsion forces to keep them from being too close
-                        zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
-                            -REPULSION_MAGNITUDE + BOT_GRAVITATION_MAGNITUDE *
-                            (nodes[i].weight.bots.len() * nodes[j].weight.bots.len()) as f64);
+                let mut connect_plans: Vec<Vec<usize>> = Vec::new();
+                {
+                    let nodes = deps.raw_nodes();
+                    for i in 0..nodes.len() {
+                        use zoom::{PhysicsParticle, Position};
+                        use na::Norm;
+                        //Expand connect plans vector with new member
+                        connect_plans.push(Vec::new());
+
+                        nodes[i].weight.particle.hooke_to(&central, PULL_CENTER_MAGNITUDE);
+                        for j in (i+1)..nodes.len() {
+                            //Apply repulsion forces to keep them from being too close
+                            zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
+                                -REPULSION_MAGNITUDE + BOT_GRAVITATION_MAGNITUDE *
+                                (nodes[i].weight.bots.len() * nodes[j].weight.bots.len()) as f64);
+
+                            let mag_s = (nodes[i].weight.particle.position() - nodes[j].weight.particle.position()).sqnorm();
+                            //Do we consider a connection between these particles
+                            if mag_s < BOT_COICE_CONNECT_LENGTH * BOT_COICE_CONNECT_LENGTH {
+                                //If so do a search beteen their bots
+                                for b1 in &nodes[i].weight.bots {
+                                    for b2 in &nodes[j].weight.bots {
+                                        if b1.connect_signal != 0 && b1.connect_signal == b2.connect_signal {
+                                            connect_plans.last_mut().unwrap().push(j);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //Now connect the nodes as necessary
+                for (ix, v) in connect_plans.iter().enumerate() {
+                    for &jx in v {
+                        deps.update_edge(petgraph::graph::NodeIndex::new(ix),
+                            petgraph::graph::NodeIndex::new(jx), false);
                     }
                 }
             }
@@ -268,7 +298,7 @@ fn main() {
         let mut final_inputs = [0i64; finalbrain::TOTAL_INPUTS];
 
         //Make the static values
-        let statics = [0, 1, 2, -1, rng.gen()];
+        let statics = [0, 1, 2, -1, i64::max_value(), rng.gen()];
         //Assign static values to each of the input arrays
         node_inputs.iter_mut().set_from(statics.iter().cloned());
         bot_inputs.iter_mut().set_from(statics.iter().cloned());
@@ -303,12 +333,12 @@ fn main() {
                         //Get the node reference
                         let n = &deps[n];
                         //Set the inputs for the node brain
-                        node_inputs[5] = n.energy;
-                        node_inputs[6] = n.bots.len() as i64;
-                        node_inputs[7] = pnode.bots.len() as i64;
-                        node_inputs[8] = pnode.bots[ib].energy;
-                        node_inputs[9] = pnode.connections;
-                        node_inputs[10] = n.connections;
+                        node_inputs[6] = n.energy;
+                        node_inputs[7] = n.bots.len() as i64;
+                        node_inputs[8] = pnode.bots.len() as i64;
+                        node_inputs[9] = pnode.bots[ib].energy;
+                        node_inputs[10] = pnode.connections;
+                        node_inputs[11] = n.connections;
                         node_inputs[nodebrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
                         let mut compute = pnode.bots[ib].node_brain.compute(&node_inputs[..]);
@@ -332,12 +362,12 @@ fn main() {
                     //Iterate through each bot and produce the outputs
                     for (iob, ob) in pnode.bots.iter().enumerate() {
                         //Set the inputs for the bot brain
-                        bot_inputs[5] = pnode.energy;
-                        bot_inputs[6] = pnode.bots.len() as i64;
-                        bot_inputs[7] = pnode.bots[ib].energy;
-                        bot_inputs[8] = ob.energy;
-                        bot_inputs[9] = ob.signal;
-                        bot_inputs[10] = pnode.connections;
+                        bot_inputs[6] = pnode.energy;
+                        bot_inputs[7] = pnode.bots.len() as i64;
+                        bot_inputs[8] = pnode.bots[ib].energy;
+                        bot_inputs[9] = ob.energy;
+                        bot_inputs[10] = ob.signal;
+                        bot_inputs[11] = pnode.connections;
                         bot_inputs[botbrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
                         let mut compute = pnode.bots[ib].bot_brain.compute(&bot_inputs[..]);
@@ -361,11 +391,11 @@ fn main() {
                     //Make the bot's final decision
 
                     //Provide static inputs
-                    final_inputs[5] = pnode.energy;
-                    final_inputs[6] = pnode.bots.len() as i64;
-                    final_inputs[7] = pnode.bots[ib].energy;
-                    final_inputs[8] = ib as i64;
-                    final_inputs[9] = pnode.connections;
+                    final_inputs[6] = pnode.energy;
+                    final_inputs[7] = pnode.bots.len() as i64;
+                    final_inputs[8] = pnode.bots[ib].energy;
+                    final_inputs[9] = ib as i64;
+                    final_inputs[10] = pnode.connections;
                     final_inputs[finalbrain::STATIC_INPUTS..].iter_mut().set_from(
                         pnode.bots[ib].memory.iter().cloned().chain(
                             //Provide the highest ranking node inputs
@@ -386,6 +416,7 @@ fn main() {
                     decision.node = compute.next().unwrap();
                     decision.rate = compute.next().unwrap();
                     decision.signal = compute.next().unwrap();
+                    decision.connect_signal = compute.next().unwrap();
                     memory.iter_mut().set_from(compute);
                 }
                 let mb = &*deps[i].bots[ib];
