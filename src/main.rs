@@ -39,6 +39,8 @@ const NEW_NODE_SPAWNS: usize = 0;
 const MUTATION_RATE: f64 = 0.0;
 //The rate at which a bot will be spawned in empty nodes when the mesh is full
 const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.002;
+//Minimum channel magnitude to connect
+const CONNECT_SIGNAL_MIN: i64 = 16;
 
 const EDGE_FALLOFF: f32 = 0.05;
 const NODE_FALLOFF: f32 = 0.25;
@@ -154,8 +156,7 @@ fn main() {
                                 //If so do a search beteen their bots
                                 for b1 in &nodes[i].weight.bots {
                                     for b2 in &nodes[j].weight.bots {
-                                        if b1.connect_signal != 0 && b1.connect_signal != 1 &&
-                                            b1.connect_signal != -1 &&
+                                        if b1.connect_signal.abs() >= CONNECT_SIGNAL_MIN &&
                                             b1.connect_signal == b2.connect_signal {
                                             connect_plans.last_mut().unwrap().push(j);
                                         }
@@ -305,7 +306,7 @@ fn main() {
         let mut final_inputs = [0i64; finalbrain::TOTAL_INPUTS];
 
         //Make the static values
-        let statics = [0, 1, 2, -1, i64::max_value(), rng.gen()];
+        let statics = [0, 1, 2, -1, rng.gen()];
         //Assign static values to each of the input arrays
         node_inputs.iter_mut().set_from(statics.iter().cloned());
         bot_inputs.iter_mut().set_from(statics.iter().cloned());
@@ -340,12 +341,12 @@ fn main() {
                         //Get the node reference
                         let n = &deps[n];
                         //Set the inputs for the node brain
-                        node_inputs[6] = n.energy;
-                        node_inputs[7] = n.bots.len() as i64;
-                        node_inputs[8] = pnode.bots.len() as i64;
-                        node_inputs[9] = pnode.bots[ib].energy;
-                        node_inputs[10] = pnode.connections;
-                        node_inputs[11] = n.connections;
+                        node_inputs[5] = n.energy;
+                        node_inputs[6] = n.bots.len() as i64;
+                        node_inputs[7] = pnode.bots.len() as i64;
+                        node_inputs[8] = pnode.bots[ib].energy;
+                        node_inputs[9] = pnode.connections;
+                        node_inputs[10] = n.connections;
                         node_inputs[nodebrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
                         let mut compute = pnode.bots[ib].node_brain.compute(&node_inputs[..]);
@@ -369,12 +370,12 @@ fn main() {
                     //Iterate through each bot and produce the outputs
                     for (iob, ob) in pnode.bots.iter().enumerate() {
                         //Set the inputs for the bot brain
-                        bot_inputs[6] = pnode.energy;
-                        bot_inputs[7] = pnode.bots.len() as i64;
-                        bot_inputs[8] = pnode.bots[ib].energy;
-                        bot_inputs[9] = ob.energy;
-                        bot_inputs[10] = ob.signal;
-                        bot_inputs[11] = pnode.connections;
+                        bot_inputs[5] = pnode.energy;
+                        bot_inputs[6] = pnode.bots.len() as i64;
+                        bot_inputs[7] = pnode.bots[ib].energy;
+                        bot_inputs[8] = ob.energy;
+                        bot_inputs[9] = ob.signal;
+                        bot_inputs[10] = pnode.connections;
                         bot_inputs[botbrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
                         let mut compute = pnode.bots[ib].bot_brain.compute(&bot_inputs[..]);
@@ -398,11 +399,11 @@ fn main() {
                     //Make the bot's final decision
 
                     //Provide static inputs
-                    final_inputs[6] = pnode.energy;
-                    final_inputs[7] = pnode.bots.len() as i64;
-                    final_inputs[8] = pnode.bots[ib].energy;
-                    final_inputs[9] = ib as i64;
-                    final_inputs[10] = pnode.connections;
+                    final_inputs[5] = pnode.energy;
+                    final_inputs[6] = pnode.bots.len() as i64;
+                    final_inputs[7] = pnode.bots[ib].energy;
+                    final_inputs[8] = ib as i64;
+                    final_inputs[9] = pnode.connections;
                     final_inputs[finalbrain::STATIC_INPUTS..].iter_mut().set_from(
                         pnode.bots[ib].memory.iter().cloned().chain(
                             //Provide the highest ranking node inputs
