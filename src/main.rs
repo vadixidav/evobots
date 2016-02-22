@@ -15,10 +15,10 @@ const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
 const REPULSION_MAGNITUDE: f64 = 500.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
-const BOT_GRAVITATION_MAGNITUDE: f64 = 0.1;
+const BOT_GRAVITATION_MAGNITUDE: f64 = -50.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 const CONNECT_PROBABILITY: f64 = 0.5;
-const CONNECT_MAX_LENGTH: f64 = 5000.0;
+const CONNECT_MAX_LENGTH: f64 = 10000.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
 const BOT_COICE_CONNECT_LENGTH: f64 = 500.0;
@@ -148,7 +148,7 @@ fn main() {
                             //Apply repulsion forces to keep them from being too close
                             zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
                                 -REPULSION_MAGNITUDE + BOT_GRAVITATION_MAGNITUDE *
-                                (nodes[i].weight.bots.len() * nodes[j].weight.bots.len()) as f64);
+                                ((nodes[i].weight.bots.len() * nodes[j].weight.bots.len()) as f64).sqrt());
 
                             let mag_s = (nodes[i].weight.particle.position() - nodes[j].weight.particle.position()).sqnorm();
                             //Do we consider a connection between these particles
@@ -447,7 +447,6 @@ fn main() {
                 if deps[i].bots[ib].decision.mate as usize == ib {
                     let nbot = Box::new(deps[i].bots[ib].divide(&mut rng));
                     deps[i].bots.push(nbot);
-                    println!("There was a divide");
                 } else {
                     let gn = &mut deps[i];
                     //Do this unsafely because we know the indices are in bounds and not the same
@@ -457,7 +456,6 @@ fn main() {
                         bm.mate(bo, &mut rng)
                     });
                     gn.bots.push(nbot);
-                    println!("There was a mate");
                 }
             }
 
