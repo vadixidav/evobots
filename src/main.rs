@@ -17,7 +17,8 @@ const REPULSION_MAGNITUDE: f64 = 500.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
 const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
-const CONNECT_PROBABILITY: f64 = 0.5;
+//Probability of connecting after node is destroyed
+const CONNECT_PROBABILITY: f64 = 0.25;
 const CONNECT_MAX_LENGTH: f64 = 10000.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
@@ -210,9 +211,6 @@ fn main() {
                 //Divide energy in half before splitting
                 deps[i].energy /= 2;
 
-                //Destroy all bots in node
-                deps[i].bots.clear();
-
                 let nnode = {
                     let nref = &deps[i];
                     Node::new(
@@ -231,6 +229,13 @@ fn main() {
                         deps[i].connections -= 1;
                         let ed = deps.find_edge(iin, i).unwrap();
                         deps.remove_edge(ed);
+                    }
+                }
+
+                for ib in (0..deps[i].bots.len()).rev() {
+                    if rng.gen_range(0.0, 1.0) < 0.5 {
+                        let b = deps[i].bots.swap_remove(ib);
+                        deps[newindex].bots.push(b);
                     }
                 }
 
@@ -443,13 +448,13 @@ fn main() {
                         movers.push(ib);
                     }
                 }
-                let choice = deps[i].bots[ib].decision.sever_choice;
+                /*let choice = deps[i].bots[ib].decision.sever_choice;
                 if choice > 0 && choice < neighbors.len() as i64 {
                     match deps.find_edge(i, neighbors[choice as usize]) {
                         Some(e) => {deps.remove_edge(e);},
                         None => {},
                     }
-                }
+                }*/
             }
 
             //Perform the matings on the node
