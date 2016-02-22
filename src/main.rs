@@ -15,7 +15,7 @@ const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
 const REPULSION_MAGNITUDE: f64 = 500.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
-const BOT_GRAVITATION_MAGNITUDE: f64 = -50.0;
+const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 const CONNECT_PROBABILITY: f64 = 0.5;
 const CONNECT_MAX_LENGTH: f64 = 10000.0;
@@ -30,7 +30,7 @@ const ROTATION_RATE: f32 = 0.005;
 
 const START_SPAWNING_AT: i64 = 50000;
 //Energy stops being generated after this many nodes exist
-const ENERGY_CUTOFF_AT: usize = 2000;
+const ENERGY_CUTOFF_AT: usize = 1500;
 const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
@@ -148,7 +148,7 @@ fn main() {
                             //Apply repulsion forces to keep them from being too close
                             zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
                                 -REPULSION_MAGNITUDE + BOT_GRAVITATION_MAGNITUDE *
-                                ((nodes[i].weight.bots.len() * nodes[j].weight.bots.len()) as f64).sqrt());
+                                ((nodes[i].weight.bots.len() + nodes[j].weight.bots.len()) as f64));
 
                             let mag_s = (nodes[i].weight.particle.position() - nodes[j].weight.particle.position()).sqnorm();
                             //Do we consider a connection between these particles
@@ -430,15 +430,25 @@ fn main() {
                     decision.rate = compute.next().unwrap();
                     decision.signal = compute.next().unwrap();
                     decision.connect_signal = compute.next().unwrap();
+                    decision.sever_choice = compute.next().unwrap();
                     memory.iter_mut().set_from(compute);
                 }
-                let mb = &*deps[i].bots[ib];
-                if mb.decision.mate >= 0 && mb.decision.mate < deps[i].bots.len() as i64 && mb.energy == MAX_ENERGY {
-                    maters.push(ib);
+                {
+                    let mb = &*deps[i].bots[ib];
+                    if mb.decision.mate >= 0 && mb.decision.mate < deps[i].bots.len() as i64 && mb.energy == MAX_ENERGY {
+                        maters.push(ib);
+                    }
+                    //Node 0 is not included because that is the present node
+                    if mb.decision.node > 0 && mb.decision.node < neighbors.len() as i64 {
+                        movers.push(ib);
+                    }
                 }
-                //Node 0 is not included because that is the present node
-                if mb.decision.node > 0 && mb.decision.node < neighbors.len() as i64 {
-                    movers.push(ib);
+                let choice = deps[i].bots[ib].decision.sever_choice;
+                if choice > 0 && choice < neighbors.len() as i64 {
+                    match deps.find_edge(i, neighbors[choice as usize]) {
+                        Some(e) => {deps.remove_edge(e);},
+                        None => {},
+                    }
                 }
             }
 

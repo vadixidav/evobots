@@ -36,7 +36,7 @@ pub mod finalbrain {
         //Add inputs for all the bot brains
         TOTAL_BOT_INPUTS * super::botbrain::TOTAL_OUTPUTS;
     //Mate, Node, Energy Rate (as a sigmoid), Signal, Connect Signal
-    pub const STATIC_OUTPUTS: usize = 5;
+    pub const STATIC_OUTPUTS: usize = 6;
     pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
@@ -139,6 +139,7 @@ pub struct Decision {
     pub rate: i64,
     pub signal: i64,
     pub connect_signal: i64,
+    pub sever_choice: i64,
 }
 
 impl Default for Decision {
@@ -149,6 +150,7 @@ impl Default for Decision {
             rate: 0,
             signal: 0,
             connect_signal: 0,
+            sever_choice: 0,
         }
     }
 }
