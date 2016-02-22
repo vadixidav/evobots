@@ -306,7 +306,7 @@ fn main() {
         let mut final_inputs = [0i64; finalbrain::TOTAL_INPUTS];
 
         //Make the static values
-        let statics = [0, 1, 2, -1, rng.gen()];
+        let statics = [0, 1, 2, -1];
         //Assign static values to each of the input arrays
         node_inputs.iter_mut().set_from(statics.iter().cloned());
         bot_inputs.iter_mut().set_from(statics.iter().cloned());
@@ -315,6 +315,11 @@ fn main() {
         //Update bots in nodes
         for i in deps.node_indices() {
             use std::collections::BinaryHeap;
+            //Make rng value on a node basis to avoid insane clustering
+            let rngval = rng.gen();
+            node_inputs[4] = rngval;
+            bot_inputs[4] = rngval;
+            final_inputs[4] = rngval;
             //The current node is always 0; everything else comes after
             let neighbors = std::iter::once(i).chain(deps.neighbors(i)).collect_vec();
 
@@ -349,7 +354,7 @@ fn main() {
                         node_inputs[10] = n.connections;
                         node_inputs[nodebrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
-                        let mut compute = pnode.bots[ib].node_brain.compute(&node_inputs[..]).inspect(|d| println!("Node Compute: {}", d));
+                        let mut compute = pnode.bots[ib].node_brain.compute(&node_inputs[..]);
 
                         let rank = Rank{
                             rank: compute.next().unwrap(),
@@ -407,7 +412,7 @@ fn main() {
                     final_inputs[finalbrain::STATIC_INPUTS..].iter_mut().set_from(
                         pnode.bots[ib].memory.iter().cloned().chain(
                             //Provide the highest ranking node inputs
-                            node_heap.iter().inspect(|d| println!("Node: {:?}", d)).flat_map(|r| r.data.iter().cloned())
+                            node_heap.iter().flat_map(|r| r.data.iter().cloned())
                         ).chain(
                             //Provide the highest ranking bot inputs
                             bot_heap.iter().flat_map(|r| r.data.iter().cloned())
@@ -442,6 +447,7 @@ fn main() {
                 if deps[i].bots[ib].decision.mate as usize == ib {
                     let nbot = Box::new(deps[i].bots[ib].divide(&mut rng));
                     deps[i].bots.push(nbot);
+                    println!("There was a divide");
                 } else {
                     let gn = &mut deps[i];
                     //Do this unsafely because we know the indices are in bounds and not the same
@@ -451,6 +457,7 @@ fn main() {
                         bm.mate(bo, &mut rng)
                     });
                     gn.bots.push(nbot);
+                    println!("There was a mate");
                 }
             }
 
@@ -466,15 +473,6 @@ fn main() {
         for i in deps.node_indices() {
             let n = &mut deps[i];
             n.moves = n.moved_bots.len() as i64;
-            for b in n.bots.iter_mut() {
-                use num::Float;
-                let asking = ((1.0/(1.0 + (b.decision.rate as f64).exp()) - 0.5) * ENERGY_EXCHANGE_MAGNITUDE as f64) as i64;
-                b.energy = b.energy.saturating_add(asking);
-                n.energy = n.energy.saturating_sub(asking);
-                if b.energy > MAX_ENERGY - asking {
-                    b.energy = MAX_ENERGY;
-                }
-            }
             while let Some(b) = n.moved_bots.pop() {
                 n.bots.push(b);
             }
@@ -488,6 +486,16 @@ fn main() {
                 if n.bots[ib].energy <= 0 {
                     n.bots.swap_remove(ib);
                     n.deaths += 1;
+                }
+            }
+            //Consume energy after loosing some so bots can reach max
+            for b in n.bots.iter_mut() {
+                use num::Float;
+                let asking = ((1.0/(1.0 + (b.decision.rate as f64).exp()) - 0.5) * ENERGY_EXCHANGE_MAGNITUDE as f64) as i64;
+                b.energy = b.energy.saturating_add(asking);
+                n.energy = n.energy.saturating_sub(asking);
+                if b.energy > MAX_ENERGY {
+                    b.energy = MAX_ENERGY;
                 }
             }
         }

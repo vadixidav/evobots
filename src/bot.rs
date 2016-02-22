@@ -45,8 +45,8 @@ pub mod finalbrain {
 
 pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 500;
 pub const EXISTENCE_COST: i64 = 50;
-pub const MAX_ENERGY: i64 = 200000;
-static DEFAULT_ENERGY: i64 = 50;
+pub const MAX_ENERGY: i64 = 20000;
+static DEFAULT_ENERGY: i64 = 4 * EXISTENCE_COST;
 
 #[derive(Clone)]
 pub enum Ins {
@@ -62,10 +62,10 @@ pub enum Ins {
     NEQ,
     AND,
     OR,
-    /*EXP,
+    EXP,
     SIN,
     COS,
-    SQT,*/
+    SQT,
     MAX,
 }
 
@@ -118,10 +118,10 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
         } else {
             0
         },
-        /*Ins::EXP => (a as f64).powf(b as f64) as i64,
+        Ins::EXP => (a as f64).powf(b as f64) as i64,
         Ins::SIN => ((a as f64 / b as f64).sin() * b as f64) as i64,
         Ins::COS => ((a as f64 / b as f64).cos() * b as f64) as i64,
-        Ins::SQT => ((a as f64 / b as f64).sqrt() * b as f64) as i64,*/
+        Ins::SQT => ((a as f64 / b as f64).sqrt() * b as f64) as i64,
         Ins::MAX => unreachable!(),
     }
 }
@@ -168,17 +168,17 @@ pub struct Bot {
 impl Bot {
     pub fn new(rng: &mut R) -> Self {
         let bvec = (0..botbrain::DEFAULT_INSTRUCTIONS).map(|_| {
-                let mut ins = Ins::LES;
+                let mut ins = Ins::MOD;
                 mutator(&mut ins, rng);
                 ins
             }).collect::<Vec<_>>();
         let nvec = (0..nodebrain::DEFAULT_INSTRUCTIONS).map(|_| {
-                let mut ins = Ins::LES;
+                let mut ins = Ins::MOD;
                 mutator(&mut ins, rng);
                 ins
             }).collect::<Vec<_>>();
         let fvec = (0..finalbrain::DEFAULT_INSTRUCTIONS).map(|_| {
-                let mut ins = Ins::LES;
+                let mut ins = Ins::MOD;
                 mutator(&mut ins, rng);
                 ins
             }).collect::<Vec<_>>();
