@@ -18,7 +18,7 @@ const ATTRACTION_MAGNITUDE: f64 = 0.001;
 const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 //Probability of connecting after node is destroyed
-const CONNECT_PROBABILITY: f64 = 0.25;
+const CONNECT_PROBABILITY: f64 = 0.0;
 const CONNECT_MAX_LENGTH: f64 = 10000.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
