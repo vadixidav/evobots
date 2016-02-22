@@ -328,12 +328,12 @@ fn main() {
                     let ref pnode = deps[i];
                     //Create a BTree to rank the nodes and fill it with default nodes
                     let mut node_heap = BinaryHeap::from(
-                        vec![Rank{rank: 0, data: [-1; nodebrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_NODE_INPUTS]
+                        vec![Rank{rank: i64::min_value(), data: [0; nodebrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_NODE_INPUTS]
                     );
 
                     //Create a BTree to rank the nodes and fill it with default bots
                     let mut bot_heap = BinaryHeap::from(
-                        vec![Rank{rank: 0, data: [-1; botbrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_BOT_INPUTS]
+                        vec![Rank{rank: i64::min_value(), data: [0; botbrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_BOT_INPUTS]
                     );
 
                     //Iterate through each node and produce the outputs
@@ -349,7 +349,7 @@ fn main() {
                         node_inputs[10] = n.connections;
                         node_inputs[nodebrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
-                        let mut compute = pnode.bots[ib].node_brain.compute(&node_inputs[..]);
+                        let mut compute = pnode.bots[ib].node_brain.compute(&node_inputs[..]).inspect(|d| println!("Node Compute: {}", d));
 
                         let rank = Rank{
                             rank: compute.next().unwrap(),
@@ -407,7 +407,7 @@ fn main() {
                     final_inputs[finalbrain::STATIC_INPUTS..].iter_mut().set_from(
                         pnode.bots[ib].memory.iter().cloned().chain(
                             //Provide the highest ranking node inputs
-                            node_heap.iter().flat_map(|r| r.data.iter().cloned())
+                            node_heap.iter().inspect(|d| println!("Node: {:?}", d)).flat_map(|r| r.data.iter().cloned())
                         ).chain(
                             //Provide the highest ranking bot inputs
                             bot_heap.iter().flat_map(|r| r.data.iter().cloned())

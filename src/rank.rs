@@ -2,19 +2,19 @@ use std::cmp::Ordering;
 
 ///Rank lets us rank multiple objects ignoring the data.
 ///The Ord for Rank is backwards so that BinaryHeap becomes a min heap.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Rank<T> {
     pub rank: i64,
     pub data: T,
 }
 
 impl<T> PartialEq for Rank<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.rank == other.rank
+    fn eq(&self, _: &Self) -> bool {
+        false
     }
 
-    fn ne(&self, other: &Self) -> bool {
-        self.rank != other.rank
+    fn ne(&self, _: &Self) -> bool {
+        false
     }
 }
 
@@ -30,7 +30,7 @@ impl<T> PartialOrd for Rank<T> {
     }
 
     fn le(&self, other: &Self) -> bool {
-        self.rank >= other.rank
+        self.rank > other.rank
     }
 
     fn gt(&self, other: &Self) -> bool {
@@ -38,7 +38,7 @@ impl<T> PartialOrd for Rank<T> {
     }
 
     fn ge(&self, other: &Self) -> bool {
-        self.rank <= other.rank
+        self.rank < other.rank
     }
 }
 
@@ -47,7 +47,7 @@ impl<T> Ord for Rank<T> {
         if self.rank < other.rank {
             Ordering::Greater
         } else if self.rank == other.rank {
-            Ordering::Equal
+            Ordering::Less
         } else {
             Ordering::Less
         }

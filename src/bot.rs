@@ -40,7 +40,7 @@ pub mod finalbrain {
     pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub const DEFAULT_INSTRUCTIONS: usize = 256;
+    pub const DEFAULT_INSTRUCTIONS: usize = 32;
 }
 
 pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 500;
@@ -50,6 +50,7 @@ static DEFAULT_ENERGY: i64 = 50;
 
 #[derive(Clone)]
 pub enum Ins {
+    NOP,
     ADD,
     SUB,
     MUL,
@@ -70,6 +71,7 @@ pub enum Ins {
 
 fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
     match *ins {
+        Ins::NOP => a,
         Ins::ADD => a + b,
         Ins::SUB => a - b,
         Ins::MUL => a * b,
