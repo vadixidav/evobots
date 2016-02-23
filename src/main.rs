@@ -13,7 +13,7 @@ use itertools::*;
 const SEPARATION_MAGNITUDE: f64 = 0.02;
 const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
-const REPULSION_MAGNITUDE: f64 = 500.0;
+const REPULSION_MAGNITUDE: f64 = 300.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.01;
 //const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
