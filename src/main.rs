@@ -14,19 +14,18 @@ const SEPARATION_MAGNITUDE: f64 = 0.02;
 const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
 const REPULSION_MAGNITUDE: f64 = 500.0;
-const ATTRACTION_MAGNITUDE: f64 = 0.03;
+const ATTRACTION_MAGNITUDE: f64 = 0.01;
 //const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 //Probability of connecting after node is destroyed
 const CONNECT_PROBABILITY: f64 = 0.0;
-const CONNECT_AFTER: f64 = 30.0;
+const CONNECT_AFTER: f64 = 40.0;
 const CONNECT_MAX_LENGTH: f64 = 400.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
 const BOT_COICE_CONNECT_LENGTH: f64 = 500.0;
 const FRAME_PHYSICS_PERIOD: u64 = 1;
 const BOT_PULL_MAGNITUDE: f64 = 50.0;
-const BOT_PULL_RADIUS: f64 = 60.0;
 
 const STARTING_POSITION: f32 = 1000.0;
 const MOVE_SPEED: f32 = 5.0;
@@ -134,6 +133,11 @@ fn main() {
                 //Apply spring forces to keep them together
                 zoom::hooke(&nodes.0.particle, &nodes.1.particle, ATTRACTION_MAGNITUDE /
                     (nodes.0.connections as f64 * nodes.1.connections as f64).sqrt());
+                zoom::gravitate_radius(&nodes.0.particle, &nodes.1.particle, BOT_PULL_MAGNITUDE *
+                (nodes.0.bots.len() as f64 *
+                    (1.0/(1.0 + (nodes.0.pull as f64).exp()) - 0.5) +
+                nodes.1.bots.len() as f64 *
+                    (1.0/(1.0 + (nodes.1.pull as f64).exp()) - 0.5)));
             }
 
             let nc = deps.node_count();
@@ -466,20 +470,10 @@ fn main() {
                         //Apply all gravitation forces
                         zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
                             //Repulse particles to keep them apart from each other
-                            -REPULSION_MAGNITUDE +
+                            -REPULSION_MAGNITUDE
                             //Attract particles based on the amount of bots in them
                             //BOT_GRAVITATION_MAGNITUDE *
                             //((nodes[i].weight.bots.len() + nodes[j].weight.bots.len()) as f64) +
-                            //Pull or push particles depending on the factors
-                            if mag_s < BOT_PULL_RADIUS * BOT_PULL_RADIUS {
-                                BOT_PULL_MAGNITUDE *
-                                (nodes[i].weight.bots.len() as f64 *
-                                    (1.0/(1.0 + (nodes[i].weight.pull as f64).exp()) - 0.5) +
-                                nodes[j].weight.bots.len() as f64 *
-                                    (1.0/(1.0 + (nodes[j].weight.pull as f64).exp()) - 0.5))
-                            } else {
-                                0.0
-                            }
                         );
 
                         let mut acon = false;
