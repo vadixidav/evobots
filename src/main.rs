@@ -19,13 +19,13 @@ const ATTRACTION_MAGNITUDE: f64 = 0.01;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 //Probability of connecting after node is destroyed
 const CONNECT_PROBABILITY: f64 = 0.0;
-const CONNECT_AFTER: f64 = 40.0;
+const CONNECT_AFTER: f64 = 35.0;
 const CONNECT_MAX_LENGTH: f64 = 400.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
 const BOT_COICE_CONNECT_LENGTH: f64 = 500.0;
 const FRAME_PHYSICS_PERIOD: u64 = 1;
-const BOT_PULL_MAGNITUDE: f64 = 50.0;
+const BOT_PULL_MAGNITUDE: f64 = 150.0;
 
 const STARTING_POSITION: f32 = 1000.0;
 const MOVE_SPEED: f32 = 5.0;
