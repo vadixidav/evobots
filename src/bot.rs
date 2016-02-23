@@ -47,7 +47,7 @@ pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 500;
 pub const EXISTENCE_COST: i64 = 50;
 pub const MAX_ENERGY: i64 = 20000;
 const DEFAULT_ENERGY: i64 = 4 * EXISTENCE_COST;
-const MUTATE_PROBABILITY: f64 = 0.1;
+const MUTATE_PROBABILITY: f64 = 1.0;
 
 #[derive(Clone)]
 pub enum Ins {
