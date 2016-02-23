@@ -9,6 +9,7 @@ static RADIUS_STATIC: f32 = 5.0;
 static ENERGY_RATIO: f64 = 0.002;
 static ENERGY_VARIATION: f64 = 0.1;
 pub static ENERGY_THRESHOLD: i64 = 500000;
+static ENERGY_FULL_COST: i64 = 5000;
 
 static DRAG: f64 = 0.1;
 
@@ -84,10 +85,17 @@ impl Node {
         }
     }
 
-    pub fn grow(&mut self, rng: &mut rand::Isaac64Rng) {
+    pub fn grow(&mut self, full: bool, rng: &mut rand::Isaac64Rng) {
         use rand::Rng;
-        self.energy = self.energy.saturating_add((self.energy as f64 * ENERGY_RATIO *
-            (1.0 + rng.gen_range(-ENERGY_VARIATION, ENERGY_VARIATION))) as i64);
+        if full {
+            if self.bots.is_empty() {
+                self.energy = self.energy.saturating_sub((ENERGY_FULL_COST as f64 *
+                    (1.0 + rng.gen_range(-ENERGY_VARIATION, ENERGY_VARIATION))) as i64);
+            }
+        } else {
+            self.energy = self.energy.saturating_add((self.energy as f64 * ENERGY_RATIO *
+                (1.0 + rng.gen_range(-ENERGY_VARIATION, ENERGY_VARIATION))) as i64);
+        }
     }
 
     pub fn advance(&mut self) {

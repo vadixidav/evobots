@@ -180,8 +180,9 @@ fn main() {
             let nc = deps.node_count();
             for n in deps.node_weights_mut() {
                 if nc < ENERGY_CUTOFF_AT {
-                    n.grow(&mut rng);
+                    n.grow(false, &mut rng);
                 } else {
+                    n.grow(true, &mut rng);
                     if n.bots.len() == 0 {
                         if rng.gen_range(0.0, 1.0) < EMPTY_NODE_FULL_MESH_SPAWN_RATE {
                             n.bots.push(Box::new(Bot::new(&mut rng)));

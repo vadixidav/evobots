@@ -50,78 +50,78 @@ static DEFAULT_ENERGY: i64 = 4 * EXISTENCE_COST;
 
 #[derive(Clone)]
 pub enum Ins {
-    NOP,
-    ADD,
-    SUB,
-    MUL,
-    DIV,
-    MOD,
-    GRT,
-    LES,
-    EQL,
-    NEQ,
-    AND,
-    OR,
-    EXP,
-    SIN,
-    COS,
-    SQT,
+    _NOP,
+    _ADD,
+    _SUB,
+    _MUL,
+    _DIV,
+    _MOD,
+    _GRT,
+    _LES,
+    _EQL,
+    _NEQ,
+    _AND,
+    _OR,
+    _EXP,
+    _SIN,
+    _COS,
+    _SQT,
     MAX,
 }
 
 fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
     match *ins {
-        Ins::NOP => a,
-        Ins::ADD => a + b,
-        Ins::SUB => a - b,
-        Ins::MUL => a * b,
-        Ins::DIV => {
+        Ins::_NOP => a,
+        Ins::_ADD => a + b,
+        Ins::_SUB => a - b,
+        Ins::_MUL => a * b,
+        Ins::_DIV => {
             match a.checked_div(b) {
                 Some(v) => v,
                 None => 0,
             }
         },
-        Ins::MOD => {
+        Ins::_MOD => {
             if b == 0 {
                 0
             } else {
                 a.wrapping_rem(b)
             }
         },
-        Ins::GRT => if a > b {
+        Ins::_GRT => if a > b {
             1
         } else {
             0
         },
-        Ins::LES => if a < b {
+        Ins::_LES => if a < b {
             1
         } else {
             0
         },
-        Ins::EQL => if a == b {
+        Ins::_EQL => if a == b {
             1
         } else {
             0
         },
-        Ins::NEQ => if a == b {
+        Ins::_NEQ => if a == b {
             1
         } else {
             0
         },
-        Ins::AND => if a != 0 && b != 0 {
+        Ins::_AND => if a != 0 && b != 0 {
             1
         } else {
             0
         },
-        Ins::OR => if a != 0 || b != 0 {
+        Ins::_OR => if a != 0 || b != 0 {
             1
         } else {
             0
         },
-        Ins::EXP => (a as f64).powf(b as f64) as i64,
-        Ins::SIN => ((a as f64 / b as f64).sin() * b as f64) as i64,
-        Ins::COS => ((a as f64 / b as f64).cos() * b as f64) as i64,
-        Ins::SQT => ((a as f64 / b as f64).sqrt() * b as f64) as i64,
+        Ins::_EXP => (a as f64).powf(b as f64) as i64,
+        Ins::_SIN => ((a as f64 / b as f64).sin() * b as f64) as i64,
+        Ins::_COS => ((a as f64 / b as f64).cos() * b as f64) as i64,
+        Ins::_SQT => ((a as f64 / b as f64).sqrt() * b as f64) as i64,
         Ins::MAX => unreachable!(),
     }
 }
@@ -170,17 +170,17 @@ pub struct Bot {
 impl Bot {
     pub fn new(rng: &mut R) -> Self {
         let bvec = (0..botbrain::DEFAULT_INSTRUCTIONS).map(|_| {
-                let mut ins = Ins::MOD;
+                let mut ins = Ins::_NOP;
                 mutator(&mut ins, rng);
                 ins
             }).collect::<Vec<_>>();
         let nvec = (0..nodebrain::DEFAULT_INSTRUCTIONS).map(|_| {
-                let mut ins = Ins::MOD;
+                let mut ins = Ins::_NOP;
                 mutator(&mut ins, rng);
                 ins
             }).collect::<Vec<_>>();
         let fvec = (0..finalbrain::DEFAULT_INSTRUCTIONS).map(|_| {
-                let mut ins = Ins::MOD;
+                let mut ins = Ins::_NOP;
                 mutator(&mut ins, rng);
                 ins
             }).collect::<Vec<_>>();
