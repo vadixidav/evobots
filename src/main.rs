@@ -33,7 +33,7 @@ const ROTATION_RATE: f32 = 0.005;
 
 const START_SPAWNING_AT: i64 = 50000;
 //Energy stops being generated after this many nodes exist
-const ENERGY_CUTOFF_AT: usize = 1000;
+const ENERGY_CUTOFF_AT: usize = 1500;
 const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
