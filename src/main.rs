@@ -15,15 +15,17 @@ const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
 const REPULSION_MAGNITUDE: f64 = 500.0;
 const ATTRACTION_MAGNITUDE: f64 = 0.001;
-const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
+//const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 //Probability of connecting after node is destroyed
 const CONNECT_PROBABILITY: f64 = 0.0;
-const CONNECT_MAX_LENGTH: f64 = 10000.0;
+const CONNECT_AFTER: f64 = 30.0;
+const CONNECT_MAX_LENGTH: f64 = 1000.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
 const BOT_COICE_CONNECT_LENGTH: f64 = 500.0;
 const FRAME_PHYSICS_PERIOD: u64 = 1;
+const BOT_PULL_MAGNITUDE: f64 = 50.0;
 
 const STARTING_POSITION: f32 = 1000.0;
 const MOVE_SPEED: f32 = 5.0;
@@ -39,7 +41,7 @@ const NEW_NODE_SPAWNS: usize = 0;
 //Cycle mutation rate; always mutates on division either way
 const MUTATION_RATE: f64 = 0.0;
 //The rate at which a bot will be spawned in empty nodes when the mesh is full
-const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.05;
+const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.005;
 //Minimum channel magnitude to connect
 const CONNECT_SIGNAL_MIN: i64 = 16;
 
@@ -80,7 +82,7 @@ fn main() {
     let glowy = gg::Renderer::new(&display);
     let mut focus_state = true;
 
-    let mut deps: petgraph::Graph<Node, bool, petgraph::Undirected> = petgraph::Graph::new_undirected();
+    let mut deps: petgraph::Graph<Node, (), petgraph::Undirected> = petgraph::Graph::new_undirected();
 
     let central = zoom::BasicParticle::new(1.0, Vec3::zero(), Vec3::zero(), 1.0);
 
@@ -146,23 +148,40 @@ fn main() {
 
                         nodes[i].weight.particle.hooke_to(&central, PULL_CENTER_MAGNITUDE);
                         for j in (i+1)..nodes.len() {
-                            //Apply repulsion forces to keep them from being too close
+                            //Apply all gravitation forces
                             zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
-                                -REPULSION_MAGNITUDE + BOT_GRAVITATION_MAGNITUDE *
-                                ((nodes[i].weight.bots.len() + nodes[j].weight.bots.len()) as f64));
+                                //Repulse particles to keep them apart from each other
+                                -REPULSION_MAGNITUDE +
+                                //Attract particles based on the amount of bots in them
+                                //BOT_GRAVITATION_MAGNITUDE *
+                                //((nodes[i].weight.bots.len() + nodes[j].weight.bots.len()) as f64) +
+                                //Pull or push particles depending on the factors
+                                BOT_PULL_MAGNITUDE *
+                                (nodes[i].weight.bots.len() as f64 *
+                                    (1.0/(1.0 + (nodes[i].weight.pull as f64).exp()) - 0.5) +
+                                nodes[j].weight.bots.len() as f64 *
+                                    (1.0/(1.0 + (nodes[j].weight.pull as f64).exp()) - 0.5))
+                            );
 
                             let mag_s = (nodes[i].weight.particle.position() - nodes[j].weight.particle.position()).sqnorm();
+                            let mut acon = false;
                             //Do we consider a connection between these particles
                             if mag_s < BOT_COICE_CONNECT_LENGTH * BOT_COICE_CONNECT_LENGTH {
                                 //If so do a search beteen their bots
-                                for b1 in &nodes[i].weight.bots {
+                                'outer: for b1 in &nodes[i].weight.bots {
                                     for b2 in &nodes[j].weight.bots {
                                         if b1.connect_signal.abs() >= CONNECT_SIGNAL_MIN &&
                                             b1.connect_signal == b2.connect_signal {
                                             connect_plans.last_mut().unwrap().push(j);
+                                            acon = true;
+                                            break 'outer;
                                         }
                                     }
                                 }
+                            }
+
+                            if mag_s < CONNECT_AFTER * CONNECT_AFTER && !acon {
+                                connect_plans.last_mut().unwrap().push(j);
                             }
                         }
                     }
@@ -172,7 +191,7 @@ fn main() {
                 for (ix, v) in connect_plans.iter().enumerate() {
                     for &jx in v {
                         deps.update_edge(petgraph::graph::NodeIndex::new(ix),
-                            petgraph::graph::NodeIndex::new(jx), false);
+                            petgraph::graph::NodeIndex::new(jx), ());
                     }
                 }
             }
@@ -225,7 +244,7 @@ fn main() {
                 let it = deps.neighbors(i).collect_vec();
                 for iin in it {
                     if rng.gen_range(0.0, 1.0) < 0.5 {
-                        deps.add_edge(newindex, iin, false);
+                        deps.add_edge(newindex, iin, ());
                         deps[newindex].connections += 1;
                         deps[i].connections -= 1;
                         let ed = deps.find_edge(iin, i).unwrap();
@@ -241,7 +260,7 @@ fn main() {
                 }
 
                 //Add the old node as a neighbor
-                deps.add_edge(i, newindex, false);
+                deps.add_edge(i, newindex, ());
                 deps[i].connections += 1;
                 deps[newindex].connections += 1;
 
@@ -286,7 +305,7 @@ fn main() {
                 for ix in 0..neighbors.len() {
                     for jx in (ix+1)..neighbors.len() {
                         if rng.gen_range(0.0, 1.0) < CONNECT_PROBABILITY {
-                            deps.update_edge(neighbors[ix], neighbors[jx], false);
+                            deps.update_edge(neighbors[ix], neighbors[jx], ());
                         }
                     }
                 }
@@ -321,6 +340,9 @@ fn main() {
         //Update bots in nodes
         for i in deps.node_indices() {
             use std::collections::BinaryHeap;
+            //Set pull to 0 before accumulating
+            deps[i].pull = 0;
+
             //Make rng value on a node basis to avoid insane clustering
             let rngval = rng.gen();
             node_inputs[4] = rngval;
@@ -437,6 +459,7 @@ fn main() {
                     decision.signal = compute.next().unwrap();
                     decision.connect_signal = compute.next().unwrap();
                     decision.sever_choice = compute.next().unwrap();
+                    decision.pull = compute.next().unwrap();
                     memory.iter_mut().set_from(compute);
                 }
                 {
@@ -449,13 +472,16 @@ fn main() {
                         movers.push(ib);
                     }
                 }
-                /*let choice = deps[i].bots[ib].decision.sever_choice;
+                //Accumulate pull from bot (shift bots to avoid ordering issues)
+                deps[i].pull = deps[i].pull.saturating_add(deps[i].bots[ib].decision.pull >> 8);
+
+                let choice = deps[i].bots[ib].decision.sever_choice;
                 if choice > 0 && choice < neighbors.len() as i64 {
                     match deps.find_edge(i, neighbors[choice as usize]) {
                         Some(e) => {deps.remove_edge(e);},
                         None => {},
                     }
-                }*/
+                }
             }
 
             //Perform the matings on the node

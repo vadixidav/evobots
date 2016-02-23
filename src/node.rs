@@ -10,6 +10,7 @@ static ENERGY_RATIO: f64 = 0.002;
 static ENERGY_VARIATION: f64 = 0.1;
 pub static ENERGY_THRESHOLD: i64 = 500000;
 static ENERGY_FULL_COST: i64 = 5000;
+static PHYSICS_RADIUS: f64 = 10.0;
 
 static DRAG: f64 = 0.1;
 
@@ -58,7 +59,7 @@ impl zoom::PhysicsParticle<Vec3, f64> for RadParticle {
 
 impl zoom::Ball<f64> for RadParticle {
     fn radius(&self) -> f64 {
-        1.0
+        PHYSICS_RADIUS
     }
 }
 
@@ -70,6 +71,7 @@ pub struct Node {
     pub deaths: i64,
     pub moves: i64,
     pub connections: i64,
+    pub pull: i64,
 }
 
 impl Node {
@@ -82,6 +84,7 @@ impl Node {
             deaths: 0,
             moves: 0,
             connections: 0,
+            pull: 0,
         }
     }
 

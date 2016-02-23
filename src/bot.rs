@@ -35,8 +35,8 @@ pub mod finalbrain {
         TOTAL_NODE_INPUTS * super::nodebrain::TOTAL_OUTPUTS +
         //Add inputs for all the bot brains
         TOTAL_BOT_INPUTS * super::botbrain::TOTAL_OUTPUTS;
-    //Mate, Node, Energy Rate (as a sigmoid), Signal, Connect Signal
-    pub const STATIC_OUTPUTS: usize = 6;
+    //Mate, Node, Energy Rate (as a sigmoid), Signal, Connect Signal, Pull
+    pub const STATIC_OUTPUTS: usize = 7;
     pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
@@ -46,7 +46,8 @@ pub mod finalbrain {
 pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 500;
 pub const EXISTENCE_COST: i64 = 50;
 pub const MAX_ENERGY: i64 = 20000;
-static DEFAULT_ENERGY: i64 = 4 * EXISTENCE_COST;
+const DEFAULT_ENERGY: i64 = 4 * EXISTENCE_COST;
+const MUTATE_PROBABILITY: f64 = 0.1;
 
 #[derive(Clone)]
 pub enum Ins {
@@ -140,6 +141,7 @@ pub struct Decision {
     pub signal: i64,
     pub connect_signal: i64,
     pub sever_choice: i64,
+    pub pull: i64,
 }
 
 impl Default for Decision {
@@ -151,6 +153,7 @@ impl Default for Decision {
             signal: 0,
             connect_signal: 0,
             sever_choice: 0,
+            pull: 0,
         }
     }
 }
@@ -212,9 +215,11 @@ impl Bot {
 
     pub fn mutate(&mut self, rng: &mut R) {
         use mli::Genetic;
-        self.bot_brain.mutate(rng);
-        self.node_brain.mutate(rng);
-        self.final_brain.mutate(rng);
+        if rng.gen_range(0.0, 1.0) < MUTATE_PROBABILITY {
+            self.bot_brain.mutate(rng);
+            self.node_brain.mutate(rng);
+            self.final_brain.mutate(rng);
+        }
     }
 
     pub fn mate(&mut self, other: &Self, rng: &mut R) -> Self {
@@ -252,9 +257,7 @@ impl Bot {
             decision: self.decision.clone(),
         };
         //Perform unit mutations on offspring
-        b.bot_brain.mutate(rng);
-        b.node_brain.mutate(rng);
-        b.final_brain.mutate(rng);
+        b.mutate(rng);
         b
     }
 
