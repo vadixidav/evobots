@@ -10,7 +10,7 @@ static ENERGY_RATIO: f64 = 0.002;
 static ENERGY_VARIATION: f64 = 0.1;
 pub static ENERGY_THRESHOLD: i64 = 500000;
 static ENERGY_FULL_COST: i64 = 5000;
-static PHYSICS_RADIUS: f64 = 10.0;
+static PHYSICS_RADIUS: f64 = 1.0;
 
 static DRAG: f64 = 0.1;
 

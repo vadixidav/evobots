@@ -10,22 +10,23 @@ extern crate mli;
 use itertools::*;
 
 //Magnitude of flinging apart of a node that split
-const SEPARATION_MAGNITUDE: f64 = 0.05;
+const SEPARATION_MAGNITUDE: f64 = 0.02;
 const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
 const REPULSION_MAGNITUDE: f64 = 500.0;
-const ATTRACTION_MAGNITUDE: f64 = 0.001;
+const ATTRACTION_MAGNITUDE: f64 = 0.03;
 //const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 //Probability of connecting after node is destroyed
 const CONNECT_PROBABILITY: f64 = 0.0;
 const CONNECT_AFTER: f64 = 30.0;
-const CONNECT_MAX_LENGTH: f64 = 1000.0;
+const CONNECT_MAX_LENGTH: f64 = 400.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
 const BOT_COICE_CONNECT_LENGTH: f64 = 500.0;
 const FRAME_PHYSICS_PERIOD: u64 = 1;
 const BOT_PULL_MAGNITUDE: f64 = 50.0;
+const BOT_PULL_RADIUS: f64 = 60.0;
 
 const STARTING_POSITION: f32 = 1000.0;
 const MOVE_SPEED: f32 = 5.0;
@@ -133,67 +134,6 @@ fn main() {
                 //Apply spring forces to keep them together
                 zoom::hooke(&nodes.0.particle, &nodes.1.particle, ATTRACTION_MAGNITUDE /
                     (nodes.0.connections as f64 * nodes.1.connections as f64).sqrt());
-            }
-
-            //Update particle forces between each node
-            {
-                let mut connect_plans: Vec<Vec<usize>> = Vec::new();
-                {
-                    let nodes = deps.raw_nodes();
-                    for i in 0..nodes.len() {
-                        use zoom::{PhysicsParticle, Position};
-                        use na::Norm;
-                        //Expand connect plans vector with new member
-                        connect_plans.push(Vec::new());
-
-                        nodes[i].weight.particle.hooke_to(&central, PULL_CENTER_MAGNITUDE);
-                        for j in (i+1)..nodes.len() {
-                            //Apply all gravitation forces
-                            zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
-                                //Repulse particles to keep them apart from each other
-                                -REPULSION_MAGNITUDE +
-                                //Attract particles based on the amount of bots in them
-                                //BOT_GRAVITATION_MAGNITUDE *
-                                //((nodes[i].weight.bots.len() + nodes[j].weight.bots.len()) as f64) +
-                                //Pull or push particles depending on the factors
-                                BOT_PULL_MAGNITUDE *
-                                (nodes[i].weight.bots.len() as f64 *
-                                    (1.0/(1.0 + (nodes[i].weight.pull as f64).exp()) - 0.5) +
-                                nodes[j].weight.bots.len() as f64 *
-                                    (1.0/(1.0 + (nodes[j].weight.pull as f64).exp()) - 0.5))
-                            );
-
-                            let mag_s = (nodes[i].weight.particle.position() - nodes[j].weight.particle.position()).sqnorm();
-                            let mut acon = false;
-                            //Do we consider a connection between these particles
-                            if mag_s < BOT_COICE_CONNECT_LENGTH * BOT_COICE_CONNECT_LENGTH {
-                                //If so do a search beteen their bots
-                                'outer: for b1 in &nodes[i].weight.bots {
-                                    for b2 in &nodes[j].weight.bots {
-                                        if b1.connect_signal.abs() >= CONNECT_SIGNAL_MIN &&
-                                            b1.connect_signal == b2.connect_signal {
-                                            connect_plans.last_mut().unwrap().push(j);
-                                            acon = true;
-                                            break 'outer;
-                                        }
-                                    }
-                                }
-                            }
-
-                            if mag_s < CONNECT_AFTER * CONNECT_AFTER && !acon {
-                                connect_plans.last_mut().unwrap().push(j);
-                            }
-                        }
-                    }
-                }
-
-                //Now connect the nodes as necessary
-                for (ix, v) in connect_plans.iter().enumerate() {
-                    for &jx in v {
-                        deps.update_edge(petgraph::graph::NodeIndex::new(ix),
-                            petgraph::graph::NodeIndex::new(jx), ());
-                    }
-                }
             }
 
             let nc = deps.node_count();
@@ -506,6 +446,71 @@ fn main() {
                 let n = deps[i].bots[ib].decision.node;
                 let b = deps[i].bots.swap_remove(ib);
                 deps[neighbors[n as usize]].moved_bots.push(b);
+            }
+        }
+
+        //Update particle forces between each node
+        {
+            let mut connect_plans: Vec<Vec<usize>> = Vec::new();
+            {
+                let nodes = deps.raw_nodes();
+                for i in 0..nodes.len() {
+                    use zoom::{PhysicsParticle, Position};
+                    use na::Norm;
+                    //Expand connect plans vector with new member
+                    connect_plans.push(Vec::new());
+
+                    nodes[i].weight.particle.hooke_to(&central, PULL_CENTER_MAGNITUDE);
+                    for j in (i+1)..nodes.len() {
+                        let mag_s = (nodes[i].weight.particle.position() - nodes[j].weight.particle.position()).sqnorm();
+                        //Apply all gravitation forces
+                        zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
+                            //Repulse particles to keep them apart from each other
+                            -REPULSION_MAGNITUDE +
+                            //Attract particles based on the amount of bots in them
+                            //BOT_GRAVITATION_MAGNITUDE *
+                            //((nodes[i].weight.bots.len() + nodes[j].weight.bots.len()) as f64) +
+                            //Pull or push particles depending on the factors
+                            if mag_s < BOT_PULL_RADIUS * BOT_PULL_RADIUS {
+                                BOT_PULL_MAGNITUDE *
+                                (nodes[i].weight.bots.len() as f64 *
+                                    (1.0/(1.0 + (nodes[i].weight.pull as f64).exp()) - 0.5) +
+                                nodes[j].weight.bots.len() as f64 *
+                                    (1.0/(1.0 + (nodes[j].weight.pull as f64).exp()) - 0.5))
+                            } else {
+                                0.0
+                            }
+                        );
+
+                        let mut acon = false;
+                        //Do we consider a connection between these particles
+                        if mag_s < BOT_COICE_CONNECT_LENGTH * BOT_COICE_CONNECT_LENGTH {
+                            //If so do a search beteen their bots
+                            'outer: for b1 in &nodes[i].weight.bots {
+                                for b2 in &nodes[j].weight.bots {
+                                    if b1.connect_signal.abs() >= CONNECT_SIGNAL_MIN &&
+                                        b1.connect_signal == b2.connect_signal {
+                                        connect_plans.last_mut().unwrap().push(j);
+                                        acon = true;
+                                        break 'outer;
+                                    }
+                                }
+                            }
+                        }
+
+                        if mag_s < CONNECT_AFTER * CONNECT_AFTER && !acon {
+                            connect_plans.last_mut().unwrap().push(j);
+                        }
+                    }
+                }
+            }
+
+            //Now connect the nodes as necessary
+            for (ix, v) in connect_plans.iter().enumerate() {
+                for &jx in v {
+                    deps.update_edge(petgraph::graph::NodeIndex::new(ix),
+                        petgraph::graph::NodeIndex::new(jx), ());
+                }
             }
         }
 
