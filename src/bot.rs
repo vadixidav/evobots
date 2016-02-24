@@ -65,7 +65,6 @@ pub enum Ins {
     _OR,
     _EXP,
     _SIN,
-    _COS,
     _SQT,
     MAX,
 }
@@ -121,7 +120,6 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
         },
         Ins::_EXP => (a as f64).powf(b as f64) as i64,
         Ins::_SIN => ((a as f64 / b as f64).sin() * b as f64) as i64,
-        Ins::_COS => ((a as f64 / b as f64).cos() * b as f64) as i64,
         Ins::_SQT => ((a as f64 / b as f64).sqrt() * b as f64) as i64,
         Ins::MAX => unreachable!(),
     }
