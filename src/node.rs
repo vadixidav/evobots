@@ -12,6 +12,8 @@ pub static ENERGY_THRESHOLD: i64 = 500000;
 static ENERGY_FULL_COST: i64 = 5000;
 static PHYSICS_RADIUS: f64 = 1.0;
 
+static EDGE_FOOD_BENEFIT: f64 = 1.0;
+
 static DRAG: f64 = 0.1;
 
 #[derive(Clone)]
@@ -97,7 +99,11 @@ impl Node {
             }
         } else {
             self.energy = self.energy.saturating_add((self.energy as f64 * ENERGY_RATIO *
-                (1.0 + rng.gen_range(-ENERGY_VARIATION, ENERGY_VARIATION))) as i64);
+                //Create rate differential
+                (1.0 + rng.gen_range(-ENERGY_VARIATION, ENERGY_VARIATION) +
+                    //Add food for having more connections
+                    EDGE_FOOD_BENEFIT * self.connections as f64)
+                ) as i64);
         }
     }
 

@@ -13,8 +13,9 @@ use itertools::*;
 const SEPARATION_MAGNITUDE: f64 = 0.02;
 const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
-const REPULSION_MAGNITUDE: f64 = 400.0;
-const ATTRACTION_MAGNITUDE: f64 = 0.01;
+const REPULSION_MAGNITUDE: f64 = 1000.0;
+//Edge attraction
+const ATTRACTION_MAGNITUDE: f64 = 0.001;
 //const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 //Probability of connecting after node is destroyed
@@ -25,7 +26,8 @@ const CONNECT_MAX_LENGTH: f64 = 400.0;
 //The length within which bots can connect their nodes together by choice
 const BOT_COICE_CONNECT_LENGTH: f64 = 500.0;
 const FRAME_PHYSICS_PERIOD: u64 = 1;
-const BOT_PULL_MAGNITUDE: f64 = 150.0;
+const BOT_PULL_MAGNITUDE: f64 = 100.0;
+const BOT_PULL_RADIUS: f64 = 200.0;
 
 const STARTING_POSITION: f32 = 1000.0;
 const MOVE_SPEED: f32 = 5.0;
@@ -106,6 +108,7 @@ fn main() {
     let mut bkstate = glium::glutin::ElementState::Released;
 
     let mut period = 0u64;
+    let mut resets = -1i64;
 
     loop {
         use glium::Surface;
@@ -116,13 +119,14 @@ fn main() {
 
         let matr = movement.to_homogeneous() * 3.0;
 
-        //Print things out
-        println!("Nodes: {}, Edges: {}", deps.node_count(), deps.edge_count());
-
         //Add node if none exist
         if deps.node_count() == 0 {
             deps.add_node(Node::new(NODE_STARTING_ENERGY, zoom::BasicParticle::default()));
+            resets += 1;
         }
+
+        //Print things out
+        println!("Nodes: {}, Edges: {}, Resets: {}", deps.node_count(), deps.edge_count(), resets);
 
         //Update forces between nodes on the correct periods
         if period % FRAME_PHYSICS_PERIOD == 0 {
@@ -133,11 +137,6 @@ fn main() {
                 //Apply spring forces to keep them together
                 zoom::hooke(&nodes.0.particle, &nodes.1.particle, ATTRACTION_MAGNITUDE /
                     (nodes.0.connections as f64 * nodes.1.connections as f64).sqrt());
-                zoom::gravitate_radius(&nodes.0.particle, &nodes.1.particle, BOT_PULL_MAGNITUDE *
-                (nodes.0.bots.len() as f64 *
-                    (1.0/(1.0 + (nodes.0.pull as f64).exp()) - 0.5) +
-                nodes.1.bots.len() as f64 *
-                    (1.0/(1.0 + (nodes.1.pull as f64).exp()) - 0.5)));
             }
 
             let nc = deps.node_count();
@@ -470,10 +469,20 @@ fn main() {
                         //Apply all gravitation forces
                         zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
                             //Repulse particles to keep them apart from each other
-                            -REPULSION_MAGNITUDE
+                            -REPULSION_MAGNITUDE +
                             //Attract particles based on the amount of bots in them
                             //BOT_GRAVITATION_MAGNITUDE *
                             //((nodes[i].weight.bots.len() + nodes[j].weight.bots.len()) as f64) +
+                            //Pull or push particles depending on the factors
+                            if mag_s < BOT_PULL_RADIUS * BOT_PULL_RADIUS {
+                                BOT_PULL_MAGNITUDE *
+                                (nodes[i].weight.bots.len() as f64 *
+                                    (1.0/(1.0 + (nodes[i].weight.pull as f64).exp()) - 0.5) +
+                                nodes[j].weight.bots.len() as f64 *
+                                    (1.0/(1.0 + (nodes[j].weight.pull as f64).exp()) - 0.5))
+                            } else {
+                                0.0
+                            }
                         );
 
                         let mut acon = false;
