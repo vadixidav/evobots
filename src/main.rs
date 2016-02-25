@@ -10,6 +10,9 @@ extern crate mli;
 extern crate crossbeam;
 use itertools::*;
 
+//Seed
+const SEED: [u64; 4] = [2, 4, 72, 4];
+
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.02;
 const SEPARATION_DELTA: f64 = 10.0;
@@ -72,7 +75,7 @@ fn main() {
     use glium::DisplayBuild;
     use num::Zero;
     use rand::{SeedableRng, Rng};
-    let mut rng = rand::Isaac64Rng::from_seed(&[51, 2, 72, 4]);
+    let mut rng = rand::Isaac64Rng::from_seed(&SEED);
 
     let display = glium::glutin::WindowBuilder::new().with_vsync()
     .with_fullscreen(glium::glutin::get_available_monitors().next().unwrap())
