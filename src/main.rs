@@ -11,11 +11,11 @@ extern crate crossbeam;
 use itertools::*;
 
 //Seed
-const SEED: [u64; 4] = [2, 4, 72, 4];
+const SEED: [u64; 4] = [1, 4, 72, 4];
 
 //Magnitude of flinging apart of a node that split
-const SEPARATION_MAGNITUDE: f64 = 0.01;
-const SEPARATION_DELTA: f64 = 20.0;
+const SEPARATION_MAGNITUDE: f64 = 0.00;
+const SEPARATION_DELTA: f64 = 15.0;
 //Magnitude of repulsion between all particles
 const REPULSION_MAGNITUDE: f64 = 1000.0;
 //Edge attraction
