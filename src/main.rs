@@ -22,7 +22,7 @@ const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 //Probability of connecting after node is destroyed
 const CONNECT_PROBABILITY: f64 = 0.0;
 const CONNECT_AFTER: f64 = 35.0;
-const CONNECT_MAX_LENGTH: f64 = 400.0;
+const CONNECT_MAX_LENGTH: f64 = 20000.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
 const BOT_COICE_CONNECT_LENGTH: f64 = 500.0;
@@ -36,7 +36,7 @@ const ROTATION_RATE: f32 = 0.005;
 
 const START_SPAWNING_AT: i64 = 50000;
 //Energy stops being generated after this many nodes exist
-const ENERGY_CUTOFF_AT: usize = 1500;
+const ENERGY_CUTOFF_AT: usize = 1000;
 const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
