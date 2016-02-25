@@ -11,7 +11,7 @@ pub mod nodebrain {
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub const DEFAULT_INSTRUCTIONS: usize = 64;
+    pub const DEFAULT_INSTRUCTIONS: usize = 32;
 }
 
 pub mod botbrain {
@@ -21,7 +21,7 @@ pub mod botbrain {
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub const DEFAULT_INSTRUCTIONS: usize = 64;
+    pub const DEFAULT_INSTRUCTIONS: usize = 32;
 }
 
 pub mod finalbrain {
@@ -40,7 +40,7 @@ pub mod finalbrain {
     pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-    pub const DEFAULT_INSTRUCTIONS: usize = 256;
+    pub const DEFAULT_INSTRUCTIONS: usize = 128;
 }
 
 pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 500;
