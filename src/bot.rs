@@ -5,8 +5,8 @@ use self::rand::Rng;
 pub type R = rand::isaac::Isaac64Rng;
 
 pub mod nodebrain {
-    //0, 1, 2, -1, rand, node energy, bot count, present node bot count, self energy, present node connections, node connections, and memory are inputs.
-    pub const STATIC_INPUTS: usize = 11;
+    //0, 1, 2, -1, rand, node energy, bot count, present node bot count, self energy, present node connections, node connections, period, and memory are inputs.
+    pub const STATIC_INPUTS: usize = 12;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
@@ -15,8 +15,8 @@ pub mod nodebrain {
 }
 
 pub mod botbrain {
-    //0, 1, 2, -1, rand, node energy, bot count, self energy, bot energy, bot signal, present node connections, and memory are inputs.
-    pub const STATIC_INPUTS: usize = 11;
+    //0, 1, 2, -1, rand, node energy, bot count, self energy, bot energy, bot signal, present node connections, period, and memory are inputs.
+    pub const STATIC_INPUTS: usize = 12;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
     pub const DEFAULT_MUTATE_SIZE: usize = 30;
@@ -28,8 +28,8 @@ pub mod finalbrain {
     pub const TOTAL_BOT_INPUTS: usize = 4;
     pub const TOTAL_NODE_INPUTS: usize = 4;
     pub const TOTAL_MEMORY: usize = 4;
-    //0, 1, 2, -1, rand, present node energy, bot count, self energy, self index, present node connections, and memory are inputs
-    pub const STATIC_INPUTS: usize = 10;
+    //0, 1, 2, -1, rand, present node energy, bot count, self energy, self index, present node connections, period, and memory are inputs
+    pub const STATIC_INPUTS: usize = 11;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + TOTAL_MEMORY +
         //Add inputs for all the node brains
         TOTAL_NODE_INPUTS * super::nodebrain::TOTAL_OUTPUTS +

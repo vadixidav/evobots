@@ -72,7 +72,7 @@ fn main() {
     use glium::DisplayBuild;
     use num::Zero;
     use rand::{SeedableRng, Rng};
-    let mut rng = rand::Isaac64Rng::from_seed(&[51, 2, 2, 4]);
+    let mut rng = rand::Isaac64Rng::from_seed(&[51, 2, 72, 4]);
 
     let display = glium::glutin::WindowBuilder::new().with_vsync()
     .with_fullscreen(glium::glutin::get_available_monitors().next().unwrap())
@@ -354,6 +354,7 @@ fn main() {
                                 node_inputs[8] = pnode.bots[ib].energy;
                                 node_inputs[9] = pnode.connections;
                                 node_inputs[10] = n.connections;
+                                node_inputs[11] = *period as i64;
                                 node_inputs[nodebrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
                                 let mut compute = pnode.bots[ib].node_brain.compute(&node_inputs[..]);
@@ -383,6 +384,7 @@ fn main() {
                                 bot_inputs[8] = ob.energy;
                                 bot_inputs[9] = ob.signal;
                                 bot_inputs[10] = pnode.connections;
+                                bot_inputs[11] = *period as i64;
                                 bot_inputs[botbrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
                                 let mut compute = pnode.bots[ib].bot_brain.compute(&bot_inputs[..]);
@@ -411,6 +413,7 @@ fn main() {
                             final_inputs[7] = pnode.bots[ib].energy;
                             final_inputs[8] = ib as i64;
                             final_inputs[9] = pnode.connections;
+                            final_inputs[10] = *period as i64;
                             final_inputs[finalbrain::STATIC_INPUTS..].iter_mut().set_from(
                                 pnode.bots[ib].memory.iter().cloned().chain(
                                     //Provide the highest ranking node inputs
