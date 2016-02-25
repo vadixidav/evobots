@@ -14,8 +14,8 @@ use itertools::*;
 const SEED: [u64; 4] = [2, 4, 72, 4];
 
 //Magnitude of flinging apart of a node that split
-const SEPARATION_MAGNITUDE: f64 = 0.02;
-const SEPARATION_DELTA: f64 = 10.0;
+const SEPARATION_MAGNITUDE: f64 = 0.01;
+const SEPARATION_DELTA: f64 = 20.0;
 //Magnitude of repulsion between all particles
 const REPULSION_MAGNITUDE: f64 = 1000.0;
 //Edge attraction
