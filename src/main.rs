@@ -17,7 +17,7 @@ const SEED: [u64; 4] = [1, 4, 72, 4];
 const SEPARATION_MAGNITUDE: f64 = 0.02;
 const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
-const REPULSION_MAGNITUDE: f64 = 1000.0;
+const REPULSION_MAGNITUDE: f64 = 900.0;
 //Edge attraction
 const ATTRACTION_MAGNITUDE: f64 = 0.003;
 //const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
@@ -90,6 +90,8 @@ fn main() {
 
     let mut deps: petgraph::Graph<Node, (), petgraph::Undirected> = petgraph::Graph::new_undirected();
 
+    let mut print_info = false;
+
     //Set mouse cursor to middle
     {
         let (dimx, dimy) = display.get_framebuffer_dimensions();
@@ -158,9 +160,6 @@ fn main() {
                     deps.add_node(Node::new(NODE_STARTING_ENERGY, zoom::BasicParticle::default()));
                     *resets += 1;
                 }
-
-                //Print things out
-                println!("Nodes: {}, Edges: {}, Resets: {}", deps.node_count(), deps.edge_count(), resets);
 
                 //Update forces between nodes on the correct periods
                 if *period % FRAME_PHYSICS_PERIOD == 0 {
@@ -444,6 +443,23 @@ fn main() {
                         }
                         {
                             let mb = &*deps[i].bots[ib];
+                            if print_info {
+                                println!("Bot energy {}, mutation size {}, {}, {}, \
+                                    and crossovers {}, {}, {} \
+                                    decided to consume {}, move {}, mate {}, \
+                                    signal {}, sever {}, pull {}, and connect {}",
+                                    mb.energy,
+                                    mb.node_brain.unit_mutate_size,
+                                    mb.bot_brain.unit_mutate_size,
+                                    mb.final_brain.unit_mutate_size,
+                                    mb.node_brain.crossover_points,
+                                    mb.bot_brain.crossover_points,
+                                    mb.final_brain.crossover_points,
+                                    mb.decision.rate, mb.decision.node, mb.decision.mate,
+                                    mb.decision.signal, mb.decision.sever_choice,
+                                    mb.decision.pull,
+                                    mb.decision.connect_signal);
+                            }
                             if mb.decision.mate >= 0 && mb.decision.mate < deps[i].bots.len() as i64 && mb.energy == MAX_ENERGY {
                                 maters.push(ib);
                             }
@@ -580,9 +596,17 @@ fn main() {
                         b.energy = b.energy.saturating_add(asking);
                         n.energy = n.energy.saturating_sub(asking);
                         if b.energy > MAX_ENERGY {
+                            if print_info {
+                                println!("Bot went over max to {}", b.energy);
+                            }
                             b.energy = MAX_ENERGY;
                         }
                     }
+                }
+
+                //Print things out
+                if print_info {
+                    println!("Nodes: {}, Edges: {}, Resets: {}", deps.node_count(), deps.edge_count(), resets);
                 }
 
                 *period += 1;
@@ -611,6 +635,9 @@ fn main() {
             for ev in display.poll_events() {
                 match ev {
                     glium::glutin::Event::Closed => closed = true,
+                    glium::glutin::Event::KeyboardInput(_, _, Some(glium::glutin::VirtualKeyCode::M)) => {
+                        print_info = !print_info;
+                    },
                     glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::W)) => {
                         fdstate = state;
                     },
