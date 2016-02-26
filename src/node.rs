@@ -12,7 +12,7 @@ pub static ENERGY_THRESHOLD: i64 = 500000;
 static ENERGY_FULL_COST: i64 = 5000;
 static PHYSICS_RADIUS: f64 = 1.0;
 
-static EDGE_FOOD_BENEFIT: f64 = 1.0;
+static EDGE_FOOD_BENEFIT: f64 = 2.0;
 
 static DRAG: f64 = 0.1;
 
