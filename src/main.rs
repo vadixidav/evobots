@@ -313,6 +313,8 @@ fn main() {
                 bot_inputs.iter_mut().set_from(statics.iter().cloned());
                 final_inputs.iter_mut().set_from(statics.iter().cloned());
 
+                let mut disconnect_indices = Vec::new();
+
                 //Update bots in nodes
                 for i in deps.node_indices() {
                     use std::collections::BinaryHeap;
@@ -473,10 +475,7 @@ fn main() {
 
                         let choice = deps[i].bots[ib].decision.sever_choice;
                         if choice > 0 && choice < neighbors.len() as i64 {
-                            match deps.find_edge(i, neighbors[choice as usize]) {
-                                Some(e) => {deps.remove_edge(e);},
-                                None => {},
-                            }
+                            disconnect_indices.push((i, neighbors[choice as usize]));
                         }
                     }
 
@@ -502,6 +501,14 @@ fn main() {
                         let n = deps[i].bots[ib].decision.node;
                         let b = deps[i].bots.swap_remove(ib);
                         deps[neighbors[n as usize]].moved_bots.push(b);
+                    }
+                }
+
+                //Deconnect nodes
+                for n in disconnect_indices {
+                    match deps.find_edge(n.0, n.1) {
+                        Some(e) => {deps.remove_edge(e);},
+                        None => {},
                     }
                 }
 
