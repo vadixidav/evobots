@@ -4,17 +4,18 @@ extern crate rand;
 use super::bot::*;
 use super::Vec3;
 
-static BOTS_RADIUS_MULTIPLIER: f32 = 1.0;
-static RADIUS_STATIC: f32 = 5.0;
-static ENERGY_RATIO: f64 = 0.002;
-static ENERGY_VARIATION: f64 = 0.1;
-pub static ENERGY_THRESHOLD: i64 = 500000;
-static ENERGY_FULL_COST: i64 = 5000;
-static PHYSICS_RADIUS: f64 = 1.0;
+const BOTS_RADIUS_MULTIPLIER: f32 = 5.0;
+const RADIUS_STATIC: f32 = 5.0;
+const ENERGY_RATIO: f64 = 0.002;
+const ENERGY_VARIATION: f64 = 0.1;
+pub const ENERGY_THRESHOLD: i64 = 500000;
+const ENERGY_FULL_COST: i64 = 5000;
+const PHYSICS_RADIUS: f64 = 1.0;
 
-static EDGE_FOOD_BENEFIT: f64 = 2.0;
+const EDGE_FOOD_BENEFIT: f64 = 1.0;
+const EDGE_DIFFUSION_COEFFICIENT: f64 = 0.01;
 
-static DRAG: f64 = 0.1;
+const DRAG: f64 = 0.1;
 
 #[derive(Clone)]
 pub struct RadParticle {
@@ -74,6 +75,7 @@ pub struct Node {
     pub moves: i64,
     pub connections: i64,
     pub pull: i64,
+    pub diffuse: i64,
 }
 
 impl Node {
@@ -87,7 +89,13 @@ impl Node {
             moves: 0,
             connections: 0,
             pull: 0,
+            diffuse: 0,
         }
+    }
+
+    pub fn diffuse(&mut self) {
+        self.diffuse = self.connections * (self.energy as f64 * EDGE_DIFFUSION_COEFFICIENT) as i64;
+        self.energy -= self.diffuse;
     }
 
     pub fn grow(&mut self, full: bool, rng: &mut rand::Isaac64Rng) {

@@ -39,7 +39,7 @@ const ROTATION_RATE: f32 = 0.005;
 
 const START_SPAWNING_AT: i64 = 50000;
 //Energy stops being generated after this many nodes exist
-const ENERGY_CUTOFF_AT: usize = 1200;
+const ENERGY_CUTOFF_AT: usize = 1000;
 const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
@@ -221,8 +221,6 @@ fn main() {
                         for iin in it {
                             if rng.gen_range(0.0, 1.0) < 0.5 {
                                 deps.add_edge(newindex, iin, ());
-                                deps[newindex].connections += 1;
-                                deps[i].connections -= 1;
                                 let ed = deps.find_edge(iin, i).unwrap();
                                 deps.remove_edge(ed);
                             }
@@ -237,8 +235,6 @@ fn main() {
 
                         //Add the old node as a neighbor
                         deps.add_edge(i, newindex, ());
-                        deps[i].connections += 1;
-                        deps[newindex].connections += 1;
 
                         //Add a positive impulse to this particle
                         deps[i].particle.p.velocity =
@@ -276,6 +272,8 @@ fn main() {
                 //Update obliteration
                 for i in deps.node_indices().rev() {
                     deps[i].advance();
+                    //Reset connections here before next loop
+                    deps[i].connections = 0;
                     if deps[i].should_obliterate() {
                         let neighbors = deps.neighbors(i).collect_vec();
                         for ix in 0..neighbors.len() {
@@ -295,9 +293,23 @@ fn main() {
                         let mag = (deps[i1].particle.position() - deps[i2].particle.position()).displacement_squared();
                         if mag > CONNECT_MAX_LENGTH.powi(2)/* || mag < CONNECT_MIN_LENGTH.powi(2)*/ {
                             deps.remove_edge(i);
-                            deps[i1].connections -= 1;
-                            deps[i2].connections -= 1;
+                        } else {
+                            deps[i1].connections += 1;
+                            deps[i2].connections += 1;
                         }
+                    }
+                }
+
+                //Update diffusion first pass
+                for i in deps.node_indices() {
+                    deps[i].diffuse();
+                }
+
+                //Update diffusion second pass
+                for i in deps.node_indices() {
+                    let neighbors = deps.neighbors(i).collect_vec();
+                    for n in neighbors {
+                        deps[i].energy += deps[n].diffuse / deps[n].connections;
                     }
                 }
 
