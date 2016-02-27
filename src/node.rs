@@ -57,7 +57,6 @@ impl zoom::Quanta<f64> for RadParticle {
 }
 
 impl zoom::PhysicsParticle<Vec3, f64> for RadParticle {
-
 }
 
 impl zoom::Ball<f64> for RadParticle {
@@ -151,6 +150,6 @@ impl Node {
         ]
     }
     pub fn radius(&self) -> f32 {
-        RADIUS_STATIC + BOTS_RADIUS_MULTIPLIER * (self.bots.len() as f32)
+        RADIUS_STATIC + BOTS_RADIUS_MULTIPLIER * (self.bots.len() as f32).sqrt()
     }
 }
