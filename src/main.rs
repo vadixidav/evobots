@@ -11,13 +11,13 @@ extern crate crossbeam;
 use itertools::*;
 
 //Seed
-const SEED: [u64; 4] = [3, 4, 72, 4];
+const SEED: [u64; 4] = [3, 4, 72, 5];
 
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.02;
 const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
-const REPULSION_MAGNITUDE: f64 = 900.0;
+const REPULSION_MAGNITUDE: f64 = 1000.0;
 //Edge attraction
 const ATTRACTION_MAGNITUDE: f64 = 0.003;
 //const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
@@ -28,9 +28,9 @@ const CONNECT_AFTER: f64 = 35.0;
 const CONNECT_MAX_LENGTH: f64 = 20000.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
-const BOT_COICE_CONNECT_LENGTH: f64 = 500.0;
+const BOT_COICE_CONNECT_LENGTH: f64 = 50000.0;
 const FRAME_PHYSICS_PERIOD: u64 = 1;
-const BOT_PULL_MAGNITUDE: f64 = 100.0;
+const BOT_PULL_MAGNITUDE: f64 = 150.0;
 const BOT_PULL_RADIUS: f64 = 200.0;
 
 const STARTING_POSITION: f32 = 1000.0;
@@ -53,6 +53,12 @@ const CONNECT_SIGNAL_MIN: i64 = 16;
 
 const EDGE_FALLOFF: f32 = 0.05;
 const NODE_FALLOFF: f32 = 0.25;
+
+const SIGMOID_DECOMPRESSION: f64 = 1000.0;
+
+fn sig(v: i64) -> f64 {
+    (1.0/(1.0 + (v as f64 / SIGMOID_DECOMPRESSION).exp()) - 0.5)
+}
 
 use na::{ToHomogeneous, Translation, Rotation};
 
@@ -549,9 +555,9 @@ fn main() {
                                     if mag_s < BOT_PULL_RADIUS * BOT_PULL_RADIUS {
                                         BOT_PULL_MAGNITUDE *
                                         (nodes[i].weight.bots.len() as f64 *
-                                            (1.0/(1.0 + (nodes[i].weight.pull as f64).exp()) - 0.5) +
+                                            sig(nodes[i].weight.pull) +
                                         nodes[j].weight.bots.len() as f64 *
-                                            (1.0/(1.0 + (nodes[j].weight.pull as f64).exp()) - 0.5))
+                                            sig(nodes[j].weight.pull))
                                     } else {
                                         0.0
                                     }
@@ -610,8 +616,7 @@ fn main() {
                     }
                     //Consume energy after loosing some so bots can reach max
                     for b in n.bots.iter_mut() {
-                        use num::Float;
-                        let asking = ((1.0/(1.0 + (b.decision.rate as f64).exp()) - 0.5) * ENERGY_EXCHANGE_MAGNITUDE as f64) as i64;
+                        let asking = (sig(b.decision.rate) * ENERGY_EXCHANGE_MAGNITUDE as f64) as i64;
                         b.energy = b.energy.saturating_add(asking);
                         n.energy = n.energy.saturating_sub(asking);
                         if b.energy > MAX_ENERGY {

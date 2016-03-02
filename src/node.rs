@@ -12,7 +12,8 @@ pub const ENERGY_THRESHOLD: i64 = 500000;
 const ENERGY_FULL_COST: i64 = 5000;
 const PHYSICS_RADIUS: f64 = 1.0;
 
-const EDGE_FOOD_BENEFIT: f64 = 1.0;
+const EDGE_FOOD_BENEFIT: f64 = 0.0;
+const HAVE_EDGE_FOOD_BENEFIT: f64 = 2.0;
 const EDGE_DIFFUSION_COEFFICIENT: f64 = 0.01;
 
 const DRAG: f64 = 0.1;
@@ -109,7 +110,13 @@ impl Node {
                 //Create rate differential
                 (1.0 + rng.gen_range(-ENERGY_VARIATION, ENERGY_VARIATION) +
                     //Add food for having more connections
-                    EDGE_FOOD_BENEFIT * self.connections as f64)
+                    EDGE_FOOD_BENEFIT * self.connections as f64 +
+                    //Add food for having any connections
+                    if self.connections != 0 {
+                        HAVE_EDGE_FOOD_BENEFIT
+                    } else {
+                        0.0
+                    })
                 ) as i64);
         }
     }
