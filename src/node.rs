@@ -6,7 +6,7 @@ use super::Vec3;
 
 const BOTS_RADIUS_MULTIPLIER: f32 = 5.0;
 const RADIUS_STATIC: f32 = 5.0;
-const ENERGY_RATIO_NET: f64 = 0.5;
+const ENERGY_RATIO_NET: f64 = 0.25;
 const ENERGY_VARIATION: f64 = 0.1;
 pub const ENERGY_THRESHOLD: i64 = 500000;
 const ENERGY_FULL_COST: i64 = 5000;
