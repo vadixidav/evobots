@@ -11,7 +11,7 @@ extern crate crossbeam;
 use itertools::*;
 
 //Seed
-const SEED: [u64; 4] = [3, 4, 72, 5];
+const SEED: [u64; 4] = [3, 1, 72, 5];
 
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.02;
@@ -39,7 +39,7 @@ const ROTATION_RATE: f32 = 0.005;
 
 const START_SPAWNING_AT: i64 = 50000;
 //Energy stops being generated after this many nodes exist
-const ENERGY_CUTOFF_AT: usize = 2000;
+const ENERGY_CUTOFF_AT: usize = 100;
 const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
@@ -181,9 +181,9 @@ fn main() {
                     let nc = deps.node_count();
                     for n in deps.node_weights_mut() {
                         if nc < ENERGY_CUTOFF_AT {
-                            n.grow(false, rng);
+                            n.grow(false, nc, rng);
                         } else {
-                            n.grow(true, rng);
+                            n.grow(true, nc, rng);
                             if n.bots.len() == 0 {
                                 if rng.gen_range(0.0, 1.0) < EMPTY_NODE_FULL_MESH_SPAWN_RATE {
                                     n.bots.push(Box::new(Bot::new(rng)));

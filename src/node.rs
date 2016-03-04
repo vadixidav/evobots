@@ -6,7 +6,7 @@ use super::Vec3;
 
 const BOTS_RADIUS_MULTIPLIER: f32 = 5.0;
 const RADIUS_STATIC: f32 = 5.0;
-const ENERGY_RATIO: f64 = 0.002;
+const ENERGY_RATIO_NET: f64 = 0.5;
 const ENERGY_VARIATION: f64 = 0.1;
 pub const ENERGY_THRESHOLD: i64 = 500000;
 const ENERGY_FULL_COST: i64 = 5000;
@@ -14,6 +14,7 @@ const PHYSICS_RADIUS: f64 = 1.0;
 
 const EDGE_FOOD_BENEFIT: f64 = 0.0;
 const HAVE_EDGE_FOOD_BENEFIT: f64 = 2.0;
+const HAVE_THREE_EDGE_FOOD_BENEFIT: f64 = 2.0;
 const EDGE_DIFFUSION_COEFFICIENT: f64 = 0.01;
 
 const DRAG: f64 = 0.1;
@@ -98,15 +99,12 @@ impl Node {
         self.energy -= self.diffuse;
     }
 
-    pub fn grow(&mut self, full: bool, rng: &mut rand::Isaac64Rng) {
+    pub fn grow(&mut self, capped: bool, total_nodes: usize, rng: &mut rand::Isaac64Rng) {
         use rand::Rng;
-        if full {
-            if self.bots.is_empty() {
-                self.energy = self.energy.saturating_sub((ENERGY_FULL_COST as f64 *
-                    (1.0 + rng.gen_range(-ENERGY_VARIATION, ENERGY_VARIATION))) as i64);
-            }
+        if capped && self.bots.is_empty() {
+            self.energy = self.energy.saturating_sub(ENERGY_FULL_COST);
         } else {
-            self.energy = self.energy.saturating_add((self.energy as f64 * ENERGY_RATIO *
+            self.energy = self.energy.saturating_add((self.energy as f64 * ENERGY_RATIO_NET / total_nodes as f64 *
                 //Create rate differential
                 (1.0 + rng.gen_range(-ENERGY_VARIATION, ENERGY_VARIATION) +
                     //Add food for having more connections
@@ -114,6 +112,11 @@ impl Node {
                     //Add food for having any connections
                     if self.connections != 0 {
                         HAVE_EDGE_FOOD_BENEFIT
+                    } else {
+                        0.0
+                    } +
+                    if self.connections == 3 {
+                        HAVE_THREE_EDGE_FOOD_BENEFIT
                     } else {
                         0.0
                     })
