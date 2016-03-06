@@ -11,7 +11,7 @@ extern crate crossbeam;
 use itertools::*;
 
 //Seed
-const SEED: [u64; 4] = [3, 1, 72, 5];
+const SEED: [u64; 4] = [234, 1, 72, 5];
 
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.015;
