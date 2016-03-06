@@ -54,7 +54,7 @@ const CONNECT_SIGNAL_MIN: i64 = 16;
 const EDGE_FALLOFF: f32 = 0.05;
 const NODE_FALLOFF: f32 = 0.25;
 
-const SIGMOID_DECOMPRESSION: f64 = 1000.0;
+const SIGMOID_DECOMPRESSION: f64 = 10000.0;
 
 fn sig(v: i64) -> f64 {
     (1.0/(1.0 + (v as f64 / SIGMOID_DECOMPRESSION).exp()) - 0.5)

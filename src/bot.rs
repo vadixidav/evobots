@@ -43,9 +43,9 @@ pub mod finalbrain {
     pub const DEFAULT_INSTRUCTIONS: usize = 128;
 }
 
-pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 500;
+pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = 20000;
 pub const EXISTENCE_COST: i64 = 50;
-pub const MAX_ENERGY: i64 = 20000;
+pub const MAX_ENERGY: i64 = 200000;
 const DEFAULT_ENERGY: i64 = 4 * EXISTENCE_COST;
 const MUTATE_PROBABILITY: f64 = 1.0;
 
@@ -63,7 +63,9 @@ pub enum Ins {
     _NEQ,
     _AND,
     _OR,
+    _POW,
     _EXP,
+    _LN,
     _SIN,
     _SQT,
     MAX,
@@ -118,7 +120,9 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
         } else {
             0
         },
-        Ins::_EXP => (a as f64).powf(b as f64) as i64,
+        Ins::_POW => (a as f64).powf(b as f64) as i64,
+        Ins::_EXP => ((a as f64).exp() * b as f64) as i64,
+        Ins::_LN => ((a as f64).ln() * b as f64) as i64,
         Ins::_SIN => ((a as f64 / b as f64).sin() * b as f64) as i64,
         Ins::_SQT => ((a as f64 / b as f64).sqrt() * b as f64) as i64,
         Ins::MAX => unreachable!(),
