@@ -17,7 +17,7 @@ const SEED: [u64; 4] = [234, 1, 72, 5];
 const SEPARATION_MAGNITUDE: f64 = 0.015;
 const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
-const REPULSION_MAGNITUDE: f64 = 1000.0;
+const REPULSION_MAGNITUDE: f64 = 600.0;
 //Edge attraction
 const ATTRACTION_MAGNITUDE: f64 = 0.003;
 //const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
