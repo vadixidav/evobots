@@ -6,18 +6,19 @@ use super::Vec3;
 
 const BOTS_RADIUS_MULTIPLIER: f32 = 5.0;
 const RADIUS_STATIC: f32 = 5.0;
-const ENERGY_RATIO_NET: f64 = 0.1;
+const ENERGY_RATIO_NET: f64 = 0.5;
 const ENERGY_VARIATION: f64 = 0.2;
 pub const ENERGY_THRESHOLD: i64 = 5000000;
 const ENERGY_FULL_COST: i64 = 50000;
-const PHYSICS_RADIUS: f64 = 1.0;
 
 const EDGE_FOOD_BENEFIT: f64 = 0.0;
 const HAVE_EDGE_FOOD_BENEFIT: f64 = 0.5;
 const HAVE_THREE_EDGE_FOOD_BENEFIT: f64 = 5.0;
 const EDGE_DIFFUSION_COEFFICIENT: f64 = 0.005;
 
-const DRAG: f64 = 0.1;
+const DRAG: f64 = 0.4;
+const PHYSICS_RADIUS: f64 = 5.0;
+const INERTIA: f64 = 1.0;
 
 #[derive(Clone)]
 pub struct RadParticle {
@@ -48,7 +49,7 @@ impl zoom::Particle<Vec3, f64> for RadParticle {
 
 impl zoom::Inertia<f64> for RadParticle {
     fn inertia(&self) -> f64 {
-        self.p.inertia()
+        INERTIA
     }
 }
 

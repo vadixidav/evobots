@@ -17,18 +17,18 @@ const SEED: [u64; 4] = [234, 1, 72, 5];
 const SEPARATION_MAGNITUDE: f64 = 0.015;
 const SEPARATION_DELTA: f64 = 10.0;
 //Magnitude of repulsion between all particles
-const REPULSION_MAGNITUDE: f64 = 600.0;
+const REPULSION_MAGNITUDE: f64 = 500.0;
 //Edge attraction
 const ATTRACTION_MAGNITUDE: f64 = 0.003;
 //const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
 const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 //Probability of connecting after node is destroyed
 const CONNECT_PROBABILITY: f64 = 0.0;
-const CONNECT_AFTER: f64 = 35.0;
+const CONNECT_AFTER: f64 = 40.0;
 const CONNECT_MAX_LENGTH: f64 = 20000.0;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
-const BOT_COICE_CONNECT_LENGTH: f64 = 50000.0;
+const BOT_CHOICE_CONNECT_LENGTH: f64 = 50000.0;
 const FRAME_PHYSICS_PERIOD: u64 = 1;
 const BOT_PULL_MAGNITUDE: f64 = 150.0;
 const BOT_PULL_RADIUS: f64 = 200.0;
@@ -45,7 +45,7 @@ const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
 const NEW_NODE_SPAWNS: usize = 0;
 //Cycle mutation rate; always mutates on division either way
-const MUTATION_RATE: f64 = 0.0;
+const MUTATION_RATE: f64 = 0.0005;
 //The rate at which a bot will be spawned in empty nodes when the mesh is full
 const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.005;
 //Minimum channel magnitude to connect
@@ -565,7 +565,7 @@ fn main() {
 
                                 let mut acon = false;
                                 //Do we consider a connection between these particles
-                                if mag_s < BOT_COICE_CONNECT_LENGTH * BOT_COICE_CONNECT_LENGTH {
+                                if mag_s < BOT_CHOICE_CONNECT_LENGTH * BOT_CHOICE_CONNECT_LENGTH {
                                     //If so do a search beteen their bots
                                     'outer: for b1 in &nodes[i].weight.bots {
                                         for b2 in &nodes[j].weight.bots {
