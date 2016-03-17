@@ -680,6 +680,11 @@ fn main() {
                 target.finish().unwrap();
             }
 
+            //Render to disk
+            {
+                //let pixels: Vec<Vec<(u8, u8, u8, u8)>> = display.read_front_buffer();
+            }
+
             for ev in display.poll_events() {
                 match ev {
                     glium::glutin::Event::Closed => closed = true,
