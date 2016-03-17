@@ -381,12 +381,12 @@ fn main() {
                             let ref pnode = deps[i];
                             //Create a BTree to rank the nodes and fill it with default nodes
                             let mut node_heap = BinaryHeap::from(
-                                vec![Rank{rank: 0, data: [0; nodebrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_NODE_INPUTS]
+                                vec![Rank{rank: 0, data: [-1; nodebrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_NODE_INPUTS]
                             );
 
                             //Create a BTree to rank the nodes and fill it with default bots
                             let mut bot_heap = BinaryHeap::from(
-                                vec![Rank{rank: 0, data: [0; botbrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_BOT_INPUTS]
+                                vec![Rank{rank: 0, data: [-1; botbrain::TOTAL_OUTPUTS]}; finalbrain::TOTAL_BOT_INPUTS]
                             );
 
                             //Iterate through each node and produce the outputs
