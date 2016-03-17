@@ -7,13 +7,10 @@ authors = ["Geordon Worley <vadixidav@gmail.com>"]
 rand = "0.3.13"
 itertools = "0.4.8"
 num = "0.1.30"
-zoom = "1.2.1"
+zoom = {git = "https://github.com/vadixidav/zoom"}
 glowygraph = "0.4.0"
 nalgebra = "0.5.1"
 crossbeam = "0.2.5"
 glium = "0.13.5"
 petgraph = "0.2.2"
 mli = {git = "https://github.com/vadixidav/mli"}
-
-[profile.release]
-debug = true

@@ -10,6 +10,10 @@ extern crate mli;
 extern crate crossbeam;
 use itertools::*;
 
+use na::{ToHomogeneous, Translation, Rotation};
+
+pub type Vec3 = na::Vec3<f64>;
+
 //Seed
 const SEED: [u64; 4] = [234, 1, 72, 5];
 
@@ -21,7 +25,7 @@ const REPULSION_MAGNITUDE: f64 = 500.0;
 //Edge attraction
 const ATTRACTION_MAGNITUDE: f64 = 0.003;
 //const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
-const PULL_CENTER_MAGNITUDE: f64 = 0.005;
+//const PULL_CENTER_MAGNITUDE: f64 = 0.005;
 //Probability of connecting after node is destroyed
 const CONNECT_PROBABILITY: f64 = 0.0;
 const CONNECT_AFTER: f64 = 40.0;
@@ -56,11 +60,27 @@ const NODE_FALLOFF: f32 = 0.25;
 
 const SIGMOID_DECOMPRESSION: f64 = 10000.0;
 
+pub const NODE_SPACE: zoom::Box<Vec3> = zoom::Box{
+    origin: Vec3{
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    },
+    offset: Vec3{
+        x: 500.0,
+        y: 500.0,
+        z: 500.0,
+    },
+};
+
+fn comp_delta(ps: (Vec3, Vec3)) -> Vec3 {
+    use zoom::Toroid;
+    NODE_SPACE.wrap_delta(ps.1 - ps.0)
+}
+
 fn sig(v: i64) -> f64 {
     (1.0/(1.0 + (v as f64 / SIGMOID_DECOMPRESSION).exp()) - 0.5)
 }
-
-use na::{ToHomogeneous, Translation, Rotation};
 
 mod bot;
 use bot::*;
@@ -68,8 +88,6 @@ mod node;
 use node::*;
 mod rank;
 use rank::*;
-
-pub type Vec3 = na::Vec3<f64>;
 
 fn vec_to_spos(v: Vec3) -> [f32; 3] {
     match v {
@@ -79,7 +97,6 @@ fn vec_to_spos(v: Vec3) -> [f32; 3] {
 
 fn main() {
     use glium::DisplayBuild;
-    use num::Zero;
     use rand::{SeedableRng, Rng};
     let mut rng = rand::Isaac64Rng::from_seed(&SEED);
 
@@ -160,7 +177,6 @@ fn main() {
 
         crossbeam::scope(|scope| {
             scope.spawn(move || {
-                let central = zoom::BasicParticle::new(1.0, Vec3::zero(), Vec3::zero(), 1.0);
                 //Add node if none exist
                 if deps.node_count() == 0 {
                     deps.add_node(Node::new(NODE_STARTING_ENERGY, zoom::BasicParticle::default()));
@@ -174,8 +190,8 @@ fn main() {
                         let nodes = deps.index_twice_mut(node_indices.0, node_indices.1);
 
                         //Apply spring forces to keep them together
-                        zoom::hooke(&nodes.0.particle, &nodes.1.particle, ATTRACTION_MAGNITUDE /
-                            (nodes.0.connections as f64 * nodes.1.connections as f64).sqrt());
+                        zoom::hooke_delta(&nodes.0.particle, &nodes.1.particle, ATTRACTION_MAGNITUDE /
+                            (nodes.0.connections as f64 * nodes.1.connections as f64).sqrt(), comp_delta);
                     }
 
                     let nc = deps.node_count();
@@ -536,16 +552,15 @@ fn main() {
                     {
                         let nodes = deps.raw_nodes();
                         for i in 0..nodes.len() {
-                            use zoom::{PhysicsParticle, Position};
+                            use zoom::Position;
                             use na::Norm;
                             //Expand connect plans vector with new member
                             connect_plans.push(Vec::new());
 
-                            nodes[i].weight.particle.hooke_to(&central, PULL_CENTER_MAGNITUDE);
                             for j in (i+1)..nodes.len() {
                                 let mag_s = (nodes[i].weight.particle.position() - nodes[j].weight.particle.position()).sqnorm();
                                 //Apply all gravitation forces
-                                zoom::gravitate_radius(&nodes[i].weight.particle, &nodes[j].weight.particle,
+                                zoom::gravitate_radius_delta(&nodes[i].weight.particle, &nodes[j].weight.particle,
                                     //Repulse particles to keep them apart from each other
                                     -REPULSION_MAGNITUDE +
                                     //Attract particles based on the amount of bots in them
@@ -560,7 +575,8 @@ fn main() {
                                             sig(nodes[j].weight.pull))
                                     } else {
                                         0.0
-                                    }
+                                    },
+                                    comp_delta
                                 );
 
                                 let mut acon = false;

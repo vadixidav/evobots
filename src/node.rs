@@ -126,9 +126,11 @@ impl Node {
     }
 
     pub fn advance(&mut self) {
-        use zoom::{Particle, PhysicsParticle};
+        use zoom::{Particle, PhysicsParticle, Toroid};
+        use super::NODE_SPACE;
         self.particle.drag(DRAG);
         self.particle.advance(1.0);
+        self.particle.p.position = NODE_SPACE.wrap_position(self.particle.p.position);
     }
 
     pub fn should_split(&self) -> bool {
