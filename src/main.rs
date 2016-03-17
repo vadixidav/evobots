@@ -18,7 +18,7 @@ pub type Vec3 = na::Vec3<f64>;
 const SEED: [u64; 4] = [234, 1, 72, 5];
 
 //Contol the size of simulation and the energy production simultaneously
-pub const SIZE_FACTOR: f64 = 1.0;
+pub const SIZE_FACTOR: f64 = 0.8;
 
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.015;
@@ -32,7 +32,7 @@ const ATTRACTION_MAGNITUDE: f64 = 0.003;
 //Probability of connecting after node is destroyed
 const CONNECT_PROBABILITY: f64 = 0.0;
 const CONNECT_AFTER: f64 = 40.0;
-const CONNECT_MAX_LENGTH: f64 = 20000.0;
+const CONNECT_MAX_LENGTH: f64 = 150.0 * SIZE_FACTOR;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
 const BOT_CHOICE_CONNECT_LENGTH: f64 = 50000.0;
