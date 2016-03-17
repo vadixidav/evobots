@@ -67,9 +67,9 @@ pub const NODE_SPACE: zoom::Box<Vec3> = zoom::Box{
         z: 0.0,
     },
     offset: Vec3{
-        x: 200.0,
-        y: 200.0,
-        z: 200.0,
+        x: 400.0,
+        y: 400.0,
+        z: 400.0,
     },
 };
 
@@ -152,23 +152,28 @@ fn main() {
             }
         ).collect_vec();
 
-        let edge_vec = deps.edge_indices().map(|e| deps.edge_endpoints(e)).flat_map(|n| {
-                let indices = n.unwrap().clone();
-                let nodes = (deps.node_weight(indices.0).unwrap(), deps.node_weight(indices.1).unwrap());
-                std::iter::once(gg::Node{
+        let edge_vec = deps.edge_indices().map(|e| deps.edge_endpoints(e)).fold(Vec::new(), |mut v, n| {
+            use zoom::Toroid;
+            let indices = n.unwrap().clone();
+            let nodes = (deps.node_weight(indices.0).unwrap(), deps.node_weight(indices.1).unwrap());
+            let rdelta = nodes.1.particle.p.position - nodes.0.particle.p.position;
+            if rdelta == NODE_SPACE.wrap_delta(rdelta) {
+                v.push(gg::Node{
                     position: vec_to_spos(nodes.0.particle.p.position),
                     color: nodes.0.color(),
                     falloff: EDGE_FALLOFF,
                     radius: nodes.0.radius(),
-                }).chain(
-                std::iter::once(gg::Node{
+                });
+                v.push(gg::Node{
                     position: vec_to_spos(nodes.1.particle.p.position),
                     color: nodes.1.color(),
                     falloff: EDGE_FALLOFF,
                     radius: nodes.1.radius(),
-                }))
+                });
             }
-        ).collect_vec();
+            v
+        }
+        );
 
         let deps = &mut deps;
         let period = &mut period;
