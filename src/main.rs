@@ -17,6 +17,9 @@ pub type Vec3 = na::Vec3<f64>;
 //Seed
 const SEED: [u64; 4] = [234, 1, 72, 5];
 
+//Contol the size of simulation and the energy production simultaneously
+pub const SIZE_FACTOR: f64 = 1.0;
+
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.015;
 const SEPARATION_DELTA: f64 = 10.0;
@@ -67,9 +70,9 @@ pub const NODE_SPACE: zoom::Box<Vec3> = zoom::Box{
         z: 0.0,
     },
     offset: Vec3{
-        x: 250.0,
-        y: 250.0,
-        z: 250.0,
+        x: 300.0 * SIZE_FACTOR,
+        y: 300.0 * SIZE_FACTOR,
+        z: 300.0 * SIZE_FACTOR,
     },
 };
 

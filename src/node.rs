@@ -2,11 +2,12 @@ extern crate zoom;
 extern crate rand;
 
 use super::bot::*;
-use super::Vec3;
+use super::{Vec3, SIZE_FACTOR};
 
 const BOTS_RADIUS_MULTIPLIER: f32 = 5.0;
 const RADIUS_STATIC: f32 = 5.0;
-const ENERGY_RATIO_NET: f64 = 1.5;
+const ENERGY_RATIO_NET: f64 = 12.0 * SIZE_FACTOR * SIZE_FACTOR * SIZE_FACTOR;
+const ENERGY_RATIO_SINGLE_LIMIT: f64 = 1.0;
 const ENERGY_VARIATION: f64 = 0.2;
 pub const ENERGY_THRESHOLD: i64 = 5000000;
 const ENERGY_FULL_COST: i64 = 50000;
@@ -80,6 +81,14 @@ pub struct Node {
     pub diffuse: i64,
 }
 
+fn growlimit(rate: f64) -> f64 {
+    if rate > ENERGY_RATIO_SINGLE_LIMIT {
+        ENERGY_RATIO_SINGLE_LIMIT
+    } else {
+        rate
+    }
+}
+
 impl Node {
     pub fn new(energy: i64, particle: zoom::BasicParticle<Vec3, f64>) -> Self {
         Node{
@@ -105,7 +114,7 @@ impl Node {
         if capped && self.bots.is_empty() {
             self.energy = self.energy.saturating_sub(ENERGY_FULL_COST);
         } else {
-            self.energy = self.energy.saturating_add((self.energy as f64 * ENERGY_RATIO_NET / total_nodes as f64 *
+            self.energy = self.energy.saturating_add((self.energy as f64 * growlimit(ENERGY_RATIO_NET / total_nodes as f64 *
                 //Create rate differential
                 (1.0 + rng.gen_range(-ENERGY_VARIATION, ENERGY_VARIATION) +
                     //Add food for having more connections
@@ -121,7 +130,8 @@ impl Node {
                     } else {
                         0.0
                     })
-                ) as i64);
+                )
+            ) as i64);
         }
     }
 
