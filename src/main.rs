@@ -67,9 +67,9 @@ pub const NODE_SPACE: zoom::Box<Vec3> = zoom::Box{
         z: 0.0,
     },
     offset: Vec3{
-        x: 500.0,
-        y: 500.0,
-        z: 500.0,
+        x: 200.0,
+        y: 200.0,
+        z: 200.0,
     },
 };
 
