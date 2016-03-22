@@ -18,7 +18,7 @@ pub type Vec3 = na::Vec3<f64>;
 const SEED: [u64; 4] = [234, 1, 72, 5];
 
 //Contol the size of simulation and the energy production simultaneously
-pub const SIZE_FACTOR: f64 = 1.0;
+pub const SIZE_FACTOR: f64 = 0.8;
 
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.015;
@@ -36,7 +36,6 @@ const CONNECT_MAX_LENGTH: f64 = 150.0 * SIZE_FACTOR;
 //const CONNECT_MIN_LENGTH: f64 = 10.0;
 //The length within which bots can connect their nodes together by choice
 const BOT_CHOICE_CONNECT_LENGTH: f64 = 50000.0;
-const FRAME_PHYSICS_PERIOD: u64 = 1;
 const BOT_PULL_MAGNITUDE: f64 = 150.0;
 const BOT_PULL_RADIUS: f64 = 200.0;
 
@@ -52,7 +51,7 @@ const NODE_STARTING_ENERGY: i64 = 200000;
 //const FINAL_SPAWN_CYCLE: u64 = 0;
 const NEW_NODE_SPAWNS: usize = 0;
 //Cycle mutation rate; always mutates on division either way
-const MUTATION_RATE: f64 = 0.0005;
+const MUTATION_RATE: f64 = 0.0001;
 //The rate at which a bot will be spawned in empty nodes when the mesh is full
 const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.005;
 //Minimum channel magnitude to connect
@@ -193,26 +192,24 @@ fn main() {
                 }
 
                 //Update forces between nodes on the correct periods
-                if *period % FRAME_PHYSICS_PERIOD == 0 {
-                    for i in deps.edge_indices() {
-                        let node_indices = deps.edge_endpoints(i).unwrap();
-                        let nodes = deps.index_twice_mut(node_indices.0, node_indices.1);
+                for i in deps.edge_indices() {
+                    let node_indices = deps.edge_endpoints(i).unwrap();
+                    let nodes = deps.index_twice_mut(node_indices.0, node_indices.1);
 
-                        //Apply spring forces to keep them together
-                        zoom::hooke_delta(&nodes.0.particle, &nodes.1.particle, ATTRACTION_MAGNITUDE /
-                            (nodes.0.connections as f64 * nodes.1.connections as f64).sqrt(), comp_delta);
-                    }
+                    //Apply spring forces to keep them together
+                    zoom::hooke_delta(&nodes.0.particle, &nodes.1.particle, ATTRACTION_MAGNITUDE /
+                        (nodes.0.connections as f64 * nodes.1.connections as f64).sqrt(), comp_delta);
+                }
 
-                    let nc = deps.node_count();
-                    for n in deps.node_weights_mut() {
-                        if nc < ENERGY_CUTOFF_AT {
-                            n.grow(false, nc, rng);
-                        } else {
-                            n.grow(true, nc, rng);
-                            if n.bots.len() == 0 {
-                                if rng.gen_range(0.0, 1.0) < EMPTY_NODE_FULL_MESH_SPAWN_RATE {
-                                    n.bots.push(Box::new(Bot::new(rng)));
-                                }
+                let nc = deps.node_count();
+                for n in deps.node_weights_mut() {
+                    if nc < ENERGY_CUTOFF_AT {
+                        n.grow(false, nc, rng);
+                    } else {
+                        n.grow(true, nc, rng);
+                        if n.bots.len() == 0 {
+                            if rng.gen_range(0.0, 1.0) < EMPTY_NODE_FULL_MESH_SPAWN_RATE {
+                                n.bots.push(Box::new(Bot::new(rng)));
                             }
                         }
                     }
