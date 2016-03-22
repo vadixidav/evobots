@@ -18,7 +18,7 @@ pub type Vec3 = na::Vec3<f64>;
 const SEED: [u64; 4] = [234, 1, 72, 5];
 
 //Contol the size of simulation and the energy production simultaneously
-pub const SIZE_FACTOR: f64 = 0.7;
+pub const SIZE_FACTOR: f64 = 1.0;
 
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.015;
@@ -62,6 +62,7 @@ const EDGE_FALLOFF: f32 = 0.05;
 const NODE_FALLOFF: f32 = 0.25;
 
 const SIGMOID_DECOMPRESSION: f64 = 10000.0;
+const FORCE_INPUT_SCALAR: f64 = 4294967296.0;
 
 pub const NODE_SPACE: zoom::Box<Vec3> = zoom::Box{
     origin: Vec3{
@@ -354,6 +355,9 @@ fn main() {
                 node_inputs.iter_mut().set_from(statics.iter().cloned());
                 bot_inputs.iter_mut().set_from(statics.iter().cloned());
                 final_inputs.iter_mut().set_from(statics.iter().cloned());
+                node_inputs[12] = *period as i64;
+                bot_inputs[11] = *period as i64;
+                final_inputs[10] = *period as i64;
 
                 let mut disconnect_indices = Vec::new();
 
@@ -370,6 +374,23 @@ fn main() {
                     final_inputs[4] = rngval;
                     //The current node is always 0; everything else comes after
                     let neighbors = std::iter::once(i).chain(deps.neighbors(i)).collect_vec();
+
+                    // Set node inputs
+                    {
+                        let ref pnode = deps[i];
+                        node_inputs[6] = pnode.energy;
+                        node_inputs[8] = pnode.bots.len() as i64;
+                        node_inputs[10] = pnode.connections;
+                        node_inputs[13] = (pnode.oldforce * FORCE_INPUT_SCALAR) as i64;
+                        bot_inputs[5] = pnode.energy;
+                        bot_inputs[6] = pnode.bots.len() as i64;
+                        bot_inputs[10] = pnode.connections;
+                        bot_inputs[12] = (pnode.oldforce * FORCE_INPUT_SCALAR) as i64;
+                        final_inputs[5] = pnode.energy;
+                        final_inputs[6] = pnode.bots.len() as i64;
+                        final_inputs[9] = pnode.connections;
+                        final_inputs[11] = (pnode.oldforce * FORCE_INPUT_SCALAR) as i64;
+                    }
 
                     let mut movers = BinaryHeap::<usize>::new();
                     let mut maters = Vec::<usize>::new();
@@ -395,12 +416,9 @@ fn main() {
                                 let n = &deps[n];
                                 //Set the inputs for the node brain
                                 node_inputs[5] = n.energy;
-                                node_inputs[6] = n.bots.len() as i64;
-                                node_inputs[7] = pnode.bots.len() as i64;
-                                node_inputs[8] = pnode.bots[ib].energy;
-                                node_inputs[9] = pnode.connections;
-                                node_inputs[10] = n.connections;
-                                node_inputs[11] = *period as i64;
+                                node_inputs[7] = n.bots.len() as i64;
+                                node_inputs[9] = pnode.bots[ib].energy;
+                                node_inputs[11] = n.connections;
                                 node_inputs[nodebrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
                                 let mut compute = pnode.bots[ib].node_brain.compute(&node_inputs[..]);
@@ -424,13 +442,9 @@ fn main() {
                             //Iterate through each bot and produce the outputs
                             for (iob, ob) in pnode.bots.iter().enumerate() {
                                 //Set the inputs for the bot brain
-                                bot_inputs[5] = pnode.energy;
-                                bot_inputs[6] = pnode.bots.len() as i64;
                                 bot_inputs[7] = pnode.bots[ib].energy;
                                 bot_inputs[8] = ob.energy;
                                 bot_inputs[9] = ob.signal;
-                                bot_inputs[10] = pnode.connections;
-                                bot_inputs[11] = *period as i64;
                                 bot_inputs[botbrain::STATIC_INPUTS..].iter_mut().set_from(pnode.bots[ib].memory.iter().cloned());
 
                                 let mut compute = pnode.bots[ib].bot_brain.compute(&bot_inputs[..]);
@@ -454,12 +468,8 @@ fn main() {
                             //Make the bot's final decision
 
                             //Provide static inputs
-                            final_inputs[5] = pnode.energy;
-                            final_inputs[6] = pnode.bots.len() as i64;
                             final_inputs[7] = pnode.bots[ib].energy;
                             final_inputs[8] = ib as i64;
-                            final_inputs[9] = pnode.connections;
-                            final_inputs[10] = *period as i64;
                             final_inputs[finalbrain::STATIC_INPUTS..].iter_mut().set_from(
                                 pnode.bots[ib].memory.iter().cloned().chain(
                                     //Provide the highest ranking node inputs

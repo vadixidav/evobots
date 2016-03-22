@@ -79,6 +79,8 @@ pub struct Node {
     pub connections: i64,
     pub pull: i64,
     pub diffuse: i64,
+    // The magnitude of the force previously
+    pub oldforce: f64,
 }
 
 fn growlimit(rate: f64) -> f64 {
@@ -101,6 +103,7 @@ impl Node {
             connections: 0,
             pull: 0,
             diffuse: 0,
+            oldforce: 0.0,
         }
     }
 
@@ -136,10 +139,15 @@ impl Node {
     }
 
     pub fn advance(&mut self) {
-        use zoom::{Particle, PhysicsParticle, Toroid};
+        use na::Norm;
+        use zoom::{Particle, Velocity, PhysicsParticle, Toroid};
         use super::NODE_SPACE;
         self.particle.drag(DRAG);
+        let oldvel = self.particle.velocity();
         self.particle.advance(1.0);
+        let newvel = self.particle.velocity();
+        // Get force including changes from time delta
+        self.oldforce = (newvel - oldvel).norm();
         self.particle.p.position = NODE_SPACE.wrap_position(self.particle.p.position);
     }
 
