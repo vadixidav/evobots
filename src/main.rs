@@ -18,7 +18,7 @@ pub type Vec3 = na::Vec3<f64>;
 const SEED: [u64; 4] = [234, 1, 72, 5];
 
 //Contol the size of simulation and the energy production simultaneously
-pub const SIZE_FACTOR: f64 = 1.0;
+pub const SIZE_FACTOR: f64 = 0.7;
 
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.015;
@@ -695,8 +695,8 @@ fn main() {
             for ev in display.poll_events() {
                 match ev {
                     glium::glutin::Event::Closed => closed = true,
-                    glium::glutin::Event::KeyboardInput(_, _, Some(glium::glutin::VirtualKeyCode::M)) => {
-                        print_info = !print_info;
+                    glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::M)) => {
+                        print_info = state == glium::glutin::ElementState::Pressed;
                     },
                     glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::W)) => {
                         fdstate = state;
