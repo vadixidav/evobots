@@ -43,7 +43,8 @@ pub mod finalbrain {
     pub const DEFAULT_INSTRUCTIONS: usize = 128;
 }
 
-pub const MAX_ENERGY: i64 = 5000000;
+pub const MAX_ENERGY: i64 = 1000000;
+pub const MATE_ENERGY: i64 = 1000000;
 pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = MAX_ENERGY;
 pub const EXISTENCE_COST: i64 = 1;
 const DEFAULT_ENERGY: i64 = 4 * EXISTENCE_COST;

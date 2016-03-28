@@ -511,7 +511,7 @@ fn main() {
                                     mb.decision.pull,
                                     mb.decision.connect_signal);
                             }
-                            if mb.decision.mate >= 0 && mb.decision.mate < deps[i].bots.len() as i64 && mb.energy == MAX_ENERGY {
+                            if mb.decision.mate >= 0 && mb.decision.mate < deps[i].bots.len() as i64 && mb.energy >= MATE_ENERGY {
                                 maters.push(ib);
                             }
                             //Node 0 is not included because that is the present node
@@ -647,7 +647,11 @@ fn main() {
                     }
                     //Consume energy after loosing some so bots can reach max
                     for b in n.bots.iter_mut() {
-                        let asking = (sig(b.decision.rate) * ENERGY_EXCHANGE_MAGNITUDE as f64) as i64;
+                        let mut asking = (sig(b.decision.rate) * ENERGY_EXCHANGE_MAGNITUDE as f64) as i64;
+                        // Don't let a bot provide more energy than it has
+                        if -asking > b.energy {
+                            asking = -b.energy;
+                        }
                         b.energy = b.energy.saturating_add(asking);
                         n.energy = n.energy.saturating_sub(asking);
                         if b.energy > MAX_ENERGY {
