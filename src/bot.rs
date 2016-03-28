@@ -9,7 +9,7 @@ pub mod nodebrain {
     pub const STATIC_INPUTS: usize = 14;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
-    pub const DEFAULT_MUTATE_SIZE: usize = 2;
+    pub const DEFAULT_MUTATE_SIZE: usize = 8;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
     pub const DEFAULT_INSTRUCTIONS: usize = 32;
 }
@@ -19,7 +19,7 @@ pub mod botbrain {
     pub const STATIC_INPUTS: usize = 13;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
-    pub const DEFAULT_MUTATE_SIZE: usize = 2;
+    pub const DEFAULT_MUTATE_SIZE: usize = 8;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
     pub const DEFAULT_INSTRUCTIONS: usize = 32;
 }
@@ -38,12 +38,12 @@ pub mod finalbrain {
     //Mate, Node, Energy Rate (as a sigmoid), Signal, Connect Signal, Pull
     pub const STATIC_OUTPUTS: usize = 7;
     pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
-    pub const DEFAULT_MUTATE_SIZE: usize = 2;
+    pub const DEFAULT_MUTATE_SIZE: usize = 8;
     pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
     pub const DEFAULT_INSTRUCTIONS: usize = 128;
 }
 
-pub const MAX_ENERGY: i64 = 1000000;
+pub const MAX_ENERGY: i64 = 5000000;
 pub const ENERGY_EXCHANGE_MAGNITUDE: i64 = MAX_ENERGY;
 pub const EXISTENCE_COST: i64 = 1;
 const DEFAULT_ENERGY: i64 = 4 * EXISTENCE_COST;

@@ -6,7 +6,7 @@ use super::{Vec3, SIZE_FACTOR};
 
 const BOTS_RADIUS_MULTIPLIER: f32 = 5.0;
 const RADIUS_STATIC: f32 = 5.0;
-const ENERGY_RATIO_NET: f64 = 20.0 * SIZE_FACTOR * SIZE_FACTOR * SIZE_FACTOR;
+const ENERGY_RATIO_NET: f64 = 2.0 * 20.0 * SIZE_FACTOR * SIZE_FACTOR * SIZE_FACTOR;
 const ENERGY_RATIO_SINGLE_LIMIT: f64 = 1.0;
 const ENERGY_VARIATION: f64 = 0.2;
 pub const ENERGY_THRESHOLD: i64 = 5000000;
@@ -15,7 +15,7 @@ const ENERGY_FULL_COST: i64 = 50000;
 const EDGE_FOOD_BENEFIT: f64 = 0.0;
 const HAVE_EDGE_FOOD_BENEFIT: f64 = 0.0;
 const HAVE_THREE_EDGE_FOOD_BENEFIT: f64 = 0.0;
-const EDGE_DIFFUSION_COEFFICIENT: f64 = 0.005;
+const EDGE_DIFFUSION_COEFFICIENT: f64 = 0.05;
 
 const DRAG: f64 = 0.4;
 const PHYSICS_RADIUS: f64 = 5.0;
@@ -140,15 +140,15 @@ impl Node {
 
     pub fn advance(&mut self) {
         use na::Norm;
-        use zoom::{Particle, Velocity, PhysicsParticle, Toroid};
-        use super::NODE_SPACE;
+        use num::Zero;
+        use zoom::{Particle, Velocity, PhysicsParticle};
         self.particle.drag(DRAG);
         let oldvel = self.particle.velocity();
         self.particle.advance(1.0);
         let newvel = self.particle.velocity();
         // Get force including changes from time delta
         self.oldforce = (newvel - oldvel).norm();
-        self.particle.p.position = NODE_SPACE.wrap_position(self.particle.p.position);
+        self.particle.p.position = super::comp_delta((Vec3::zero(), self.particle.p.position));
     }
 
     pub fn should_split(&self) -> bool {
