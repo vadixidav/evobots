@@ -18,7 +18,7 @@ pub type Vec3 = na::Vec3<f64>;
 const SEED: [u64; 4] = [234, 1, 72, 5];
 
 //Contol the size of simulation and the energy production simultaneously
-pub const SIZE_FACTOR: f64 = 1.0;
+pub const SIZE_FACTOR: f64 = 0.8;
 
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.015;
@@ -661,6 +661,8 @@ fn main() {
                             b.energy = MAX_ENERGY;
                         }
                     }
+                    // Shrink vector to prevent insane memory usage
+                    n.bots.shrink_to_fit();
                 }
 
                 //Print things out
