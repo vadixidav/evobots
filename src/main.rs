@@ -19,7 +19,6 @@ const SEED: [u64; 4] = [234, 1, 72, 5];
 
 //Contol the size of simulation and the energy production simultaneously
 pub const SIZE_FACTOR: f64 = 1.0;
-pub const RADIUS: f64 = SIZE_FACTOR * 300.0;
 
 //Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.015;
@@ -64,33 +63,22 @@ const NODE_FALLOFF: f32 = 0.25;
 const SIGMOID_DECOMPRESSION: f64 = 4294967296.0;
 const FORCE_INPUT_SCALAR: f64 = 4294967296.0;
 
-fn wrap_scalar<D>(pos: D, bound: D) -> D where D: num::Float + num::FromPrimitive {
-    // Bound must be positive
-    let bound = bound.abs();
-    let twobound = D::from_u32(2u32).unwrap() * bound;
-    // Create shrunk_pos, which may still not be inside the space, but is within one stride of it
-    let shrunk_pos = pos % twobound;
-
-    if shrunk_pos < -bound {
-        shrunk_pos + twobound
-    } else if shrunk_pos > bound {
-        shrunk_pos - twobound
-    } else {
-        shrunk_pos
-    }
-}
+pub const NODE_SPACE: zoom::Box<Vec3> = zoom::Box{
+    origin: Vec3{
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    },
+    offset: Vec3{
+        x: 300.0 * SIZE_FACTOR,
+        y: 300.0 * SIZE_FACTOR,
+        z: 300.0 * SIZE_FACTOR,
+    },
+};
 
 fn comp_delta(ps: (Vec3, Vec3)) -> Vec3 {
-    use na::Norm;
-    let center = (ps.0 + ps.1) / 2.0;
-    let delta = ps.1 - ps.0;
-    let mag_s = delta.sqnorm();
-    if mag_s > RADIUS * RADIUS {
-        let mag = mag_s.sqrt();
-        delta / mag * wrap_scalar(mag, RADIUS)
-    } else {
-        delta
-    }
+    use zoom::Toroid;
+    NODE_SPACE.wrap_delta(ps.1 - ps.0)
 }
 
 fn sig(v: i64) -> f64 {
@@ -168,10 +156,11 @@ fn main() {
         ).collect_vec();
 
         let edge_vec = deps.edge_indices().map(|e| deps.edge_endpoints(e)).fold(Vec::new(), |mut v, n| {
+            use zoom::Toroid;
             let indices = n.unwrap().clone();
             let nodes = (deps.node_weight(indices.0).unwrap(), deps.node_weight(indices.1).unwrap());
             let rdelta = nodes.1.particle.p.position - nodes.0.particle.p.position;
-            if rdelta == comp_delta((nodes.0.particle.p.position, nodes.1.particle.p.position)) {
+            if rdelta == NODE_SPACE.wrap_delta(rdelta) {
                 v.push(gg::Node{
                     position: vec_to_spos(nodes.0.particle.p.position),
                     color: nodes.0.color(),

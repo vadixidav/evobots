@@ -140,15 +140,15 @@ impl Node {
 
     pub fn advance(&mut self) {
         use na::Norm;
-        use num::Zero;
-        use zoom::{Particle, Velocity, PhysicsParticle};
+        use zoom::{Particle, Velocity, PhysicsParticle, Toroid};
+        use super::NODE_SPACE;
         self.particle.drag(DRAG);
         let oldvel = self.particle.velocity();
         self.particle.advance(1.0);
         let newvel = self.particle.velocity();
         // Get force including changes from time delta
         self.oldforce = (newvel - oldvel).norm();
-        self.particle.p.position = super::comp_delta((Vec3::zero(), self.particle.p.position));
+        self.particle.p.position = NODE_SPACE.wrap_position(self.particle.p.position);
     }
 
     pub fn should_split(&self) -> bool {
