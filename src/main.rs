@@ -18,7 +18,7 @@ pub type Vec3 = na::Vec3<f64>;
 const SEED: [u64; 4] = [234, 1, 72, 5];
 
 // Contol the size of simulation and the energy production simultaneously
-pub const SIZE_FACTOR: f64 = 0.8;
+pub const SIZE_FACTOR: f64 = 1.2;
 
 // Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.015;
@@ -45,7 +45,7 @@ const ROTATION_RATE: f32 = 0.005;
 
 const START_SPAWNING_AT: i64 = 50000;
 // Energy stops being generated after this many nodes exist
-const ENERGY_CUTOFF_AT: usize = 100;
+const ENERGY_CUTOFF_AT: usize = 150;
 const SPAWN_RATE: f64 = 1.0 / (START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
 // const FINAL_SPAWN_CYCLE: u64 = 0;

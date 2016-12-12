@@ -19,7 +19,7 @@ const EDGE_DIFFUSION_COEFFICIENT: f64 = 0.05;
 
 const DRAG: f64 = 0.4;
 const PHYSICS_RADIUS: f64 = 5.0;
-const INERTIA: f64 = 1.0;
+const INERTIA: f64 = 25.0;
 
 #[derive(Clone)]
 pub struct RadParticle {
