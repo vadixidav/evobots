@@ -5,7 +5,7 @@ use self::rand::Rng;
 pub type R = rand::isaac::Isaac64Rng;
 
 pub mod nodebrain {
-    //0, 1, 2, -1, rand, node energy, present node energy, bot count, present node bot count, self energy, present node connections, node connections, period, force, and memory are inputs.
+    // 0, 1, 2, -1, rand, node energy, present node energy, bot count, present node bot count, self energy, present node connections, node connections, period, force, and memory are inputs.
     pub const STATIC_INPUTS: usize = 14;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
@@ -15,7 +15,7 @@ pub mod nodebrain {
 }
 
 pub mod botbrain {
-    //0, 1, 2, -1, rand, node energy, bot count, self energy, bot energy, bot signal, present node connections, period, force, and memory are inputs.
+    // 0, 1, 2, -1, rand, node energy, bot count, self energy, bot energy, bot signal, present node connections, period, force, and memory are inputs.
     pub const STATIC_INPUTS: usize = 13;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + super::finalbrain::TOTAL_MEMORY;
     pub const TOTAL_OUTPUTS: usize = 5;
@@ -28,14 +28,14 @@ pub mod finalbrain {
     pub const TOTAL_BOT_INPUTS: usize = 4;
     pub const TOTAL_NODE_INPUTS: usize = 4;
     pub const TOTAL_MEMORY: usize = 4;
-    //0, 1, 2, -1, rand, present node energy, bot count, self energy, self index, present node connections, period, force, and memory are inputs
+    // 0, 1, 2, -1, rand, present node energy, bot count, self energy, self index, present node connections, period, force, and memory are inputs
     pub const STATIC_INPUTS: usize = 12;
     pub const TOTAL_INPUTS: usize = STATIC_INPUTS + TOTAL_MEMORY +
         //Add inputs for all the node brains
         TOTAL_NODE_INPUTS * super::nodebrain::TOTAL_OUTPUTS +
         //Add inputs for all the bot brains
         TOTAL_BOT_INPUTS * super::botbrain::TOTAL_OUTPUTS;
-    //Mate, Node, Energy Rate (as a sigmoid), Signal, Connect Signal, Pull
+    // Mate, Node, Energy Rate (as a sigmoid), Signal, Connect Signal, Pull
     pub const STATIC_OUTPUTS: usize = 7;
     pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
     pub const DEFAULT_MUTATE_SIZE: usize = 8;
@@ -83,44 +83,56 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
                 Some(v) => v,
                 None => 0,
             }
-        },
+        }
         Ins::_MOD => {
             if b == 0 {
                 0
             } else {
                 a.wrapping_rem(b)
             }
-        },
-        Ins::_GRT => if a > b {
-            1
-        } else {
-            0
-        },
-        Ins::_LES => if a < b {
-            1
-        } else {
-            0
-        },
-        Ins::_EQL => if a == b {
-            1
-        } else {
-            0
-        },
-        Ins::_NEQ => if a == b {
-            1
-        } else {
-            0
-        },
-        Ins::_AND => if a != 0 && b != 0 {
-            1
-        } else {
-            0
-        },
-        Ins::_OR => if a != 0 || b != 0 {
-            1
-        } else {
-            0
-        },
+        }
+        Ins::_GRT => {
+            if a > b {
+                1
+            } else {
+                0
+            }
+        }
+        Ins::_LES => {
+            if a < b {
+                1
+            } else {
+                0
+            }
+        }
+        Ins::_EQL => {
+            if a == b {
+                1
+            } else {
+                0
+            }
+        }
+        Ins::_NEQ => {
+            if a == b {
+                1
+            } else {
+                0
+            }
+        }
+        Ins::_AND => {
+            if a != 0 && b != 0 {
+                1
+            } else {
+                0
+            }
+        }
+        Ins::_OR => {
+            if a != 0 || b != 0 {
+                1
+            } else {
+                0
+            }
+        }
         Ins::_POW => (a as f64).powf(b as f64) as i64,
         Ins::_EXP => ((a as f64).exp() * b as f64) as i64,
         Ins::_LN => ((a as f64).ln() * b as f64) as i64,
@@ -132,14 +144,14 @@ fn processor(ins: &Ins, a: i64, b: i64) -> i64 {
 
 fn mutator(ins: &mut Ins, rng: &mut R) {
     use std::mem;
-    *ins = unsafe{mem::transmute(rng.gen_range::<u8>(0, Ins::MAX as u8))};
+    *ins = unsafe { mem::transmute(rng.gen_range::<u8>(0, Ins::MAX as u8)) };
 }
 
 #[derive(Clone)]
 pub struct Decision {
     pub mate: i64,
     pub node: i64,
-    //This will be ran through a sigmoid
+    // This will be ran through a sigmoid
     pub rate: i64,
     pub signal: i64,
     pub connect_signal: i64,
@@ -149,7 +161,7 @@ pub struct Decision {
 
 impl Default for Decision {
     fn default() -> Self {
-        Decision{
+        Decision {
             mate: -1,
             node: -1,
             rate: 0,
@@ -175,36 +187,54 @@ pub struct Bot {
 
 impl Bot {
     pub fn new(rng: &mut R) -> Self {
-        let bvec = (0..botbrain::DEFAULT_INSTRUCTIONS).map(|_| {
+        let bvec = (0..botbrain::DEFAULT_INSTRUCTIONS)
+            .map(|_| {
                 let mut ins = Ins::_NOP;
                 mutator(&mut ins, rng);
                 ins
-            }).collect::<Vec<_>>();
-        let nvec = (0..nodebrain::DEFAULT_INSTRUCTIONS).map(|_| {
+            })
+            .collect::<Vec<_>>();
+        let nvec = (0..nodebrain::DEFAULT_INSTRUCTIONS)
+            .map(|_| {
                 let mut ins = Ins::_NOP;
                 mutator(&mut ins, rng);
                 ins
-            }).collect::<Vec<_>>();
-        let fvec = (0..finalbrain::DEFAULT_INSTRUCTIONS).map(|_| {
+            })
+            .collect::<Vec<_>>();
+        let fvec = (0..finalbrain::DEFAULT_INSTRUCTIONS)
+            .map(|_| {
                 let mut ins = Ins::_NOP;
                 mutator(&mut ins, rng);
                 ins
-            }).collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
         Bot {
-            bot_brain: mli::Mep::new(botbrain::TOTAL_INPUTS, botbrain::TOTAL_OUTPUTS,
-                botbrain::DEFAULT_MUTATE_SIZE, botbrain::DEFAULT_CROSSOVER_POINTS, rng,
-                bvec.into_iter(),
-                mutator, processor),
+            bot_brain: mli::Mep::new(botbrain::TOTAL_INPUTS,
+                                     botbrain::TOTAL_OUTPUTS,
+                                     botbrain::DEFAULT_MUTATE_SIZE,
+                                     botbrain::DEFAULT_CROSSOVER_POINTS,
+                                     rng,
+                                     bvec.into_iter(),
+                                     mutator,
+                                     processor),
 
-            node_brain: mli::Mep::new(nodebrain::TOTAL_INPUTS, nodebrain::TOTAL_OUTPUTS,
-                nodebrain::DEFAULT_MUTATE_SIZE, nodebrain::DEFAULT_CROSSOVER_POINTS, rng,
-                nvec.into_iter(),
-                mutator, processor),
+            node_brain: mli::Mep::new(nodebrain::TOTAL_INPUTS,
+                                      nodebrain::TOTAL_OUTPUTS,
+                                      nodebrain::DEFAULT_MUTATE_SIZE,
+                                      nodebrain::DEFAULT_CROSSOVER_POINTS,
+                                      rng,
+                                      nvec.into_iter(),
+                                      mutator,
+                                      processor),
 
-            final_brain: mli::Mep::new(finalbrain::TOTAL_INPUTS, finalbrain::TOTAL_OUTPUTS,
-                finalbrain::DEFAULT_MUTATE_SIZE, finalbrain::DEFAULT_CROSSOVER_POINTS, rng,
-                fvec.into_iter(),
-                mutator, processor),
+            final_brain: mli::Mep::new(finalbrain::TOTAL_INPUTS,
+                                       finalbrain::TOTAL_OUTPUTS,
+                                       finalbrain::DEFAULT_MUTATE_SIZE,
+                                       finalbrain::DEFAULT_CROSSOVER_POINTS,
+                                       rng,
+                                       fvec.into_iter(),
+                                       mutator,
+                                       processor),
 
             energy: DEFAULT_ENERGY,
 
@@ -226,9 +256,9 @@ impl Bot {
     }
 
     pub fn mate(&mut self, other: &Self, rng: &mut R) -> Self {
-        //Divide energy in half when mating for the mater
+        // Divide energy in half when mating for the mater
         self.energy /= 2;
-        let mut b = Bot{
+        let mut b = Bot {
             bot_brain: mli::Genetic::mate((&self.bot_brain, &other.bot_brain), rng),
             node_brain: mli::Genetic::mate((&self.node_brain, &other.node_brain), rng),
             final_brain: mli::Genetic::mate((&self.final_brain, &other.final_brain), rng),
@@ -238,15 +268,15 @@ impl Bot {
             memory: self.memory,
             decision: self.decision.clone(),
         };
-        //Perform unit mutations on offspring
+        // Perform unit mutations on offspring
         b.mutate(rng);
         b
     }
 
     pub fn divide(&mut self, rng: &mut R) -> Self {
-        //Divide energy in half when dividing
+        // Divide energy in half when dividing
         self.energy /= 2;
-        let mut b = Bot{
+        let mut b = Bot {
             bot_brain: self.bot_brain.clone(),
             node_brain: self.node_brain.clone(),
             final_brain: self.final_brain.clone(),
@@ -254,10 +284,10 @@ impl Bot {
             signal: self.signal,
             connect_signal: 0,
             memory: self.memory,
-            //Clone the rate of energy consumption in the decision
+            // Clone the rate of energy consumption in the decision
             decision: self.decision.clone(),
         };
-        //Perform unit mutations on offspring
+        // Perform unit mutations on offspring
         b.mutate(rng);
         b
     }

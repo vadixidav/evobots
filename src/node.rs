@@ -60,8 +60,7 @@ impl zoom::Quanta<f64> for RadParticle {
     }
 }
 
-impl zoom::PhysicsParticle<Vec3, f64> for RadParticle {
-}
+impl zoom::PhysicsParticle<Vec3, f64> for RadParticle {}
 
 impl zoom::Ball<f64> for RadParticle {
     fn radius(&self) -> f64 {
@@ -93,9 +92,9 @@ fn growlimit(rate: f64) -> f64 {
 
 impl Node {
     pub fn new(energy: i64, particle: zoom::BasicParticle<Vec3, f64>) -> Self {
-        Node{
+        Node {
             energy: energy,
-            particle: RadParticle{p: particle},
+            particle: RadParticle { p: particle },
             bots: Vec::new(),
             moved_bots: Vec::new(),
             deaths: 0,
@@ -163,22 +162,21 @@ impl Node {
                 _ => false,
             }
         };
-        self.energy <= 0 || match self.particle.position() {
-            Vec3{x, y, z} => {clos(x) || clos(y) || clos(z)}
+        self.energy <= 0 ||
+        match self.particle.position() {
+            Vec3 { x, y, z } => clos(x) || clos(y) || clos(z),
         }
     }
 
     pub fn color(&self) -> [f32; 4] {
-        [
-            1.0 - self.energy as f32 / ENERGY_THRESHOLD as f32,
-            self.energy as f32 / ENERGY_THRESHOLD as f32,
-            if self.bots.len() == 0 {
-                0.0
-            } else {
-                self.moves as f32 / self.bots.len() as f32
-            },
-            1.0,
-        ]
+        [1.0 - self.energy as f32 / ENERGY_THRESHOLD as f32,
+         self.energy as f32 / ENERGY_THRESHOLD as f32,
+         if self.bots.len() == 0 {
+             0.0
+         } else {
+             self.moves as f32 / self.bots.len() as f32
+         },
+         1.0]
     }
     pub fn radius(&self) -> f32 {
         RADIUS_STATIC + BOTS_RADIUS_MULTIPLIER * (self.bots.len() as f32).sqrt()

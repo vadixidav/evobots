@@ -14,27 +14,27 @@ use na::{ToHomogeneous, Translation, Rotation};
 
 pub type Vec3 = na::Vec3<f64>;
 
-//Seed
+// Seed
 const SEED: [u64; 4] = [234, 1, 72, 5];
 
-//Contol the size of simulation and the energy production simultaneously
+// Contol the size of simulation and the energy production simultaneously
 pub const SIZE_FACTOR: f64 = 0.8;
 
-//Magnitude of flinging apart of a node that split
+// Magnitude of flinging apart of a node that split
 const SEPARATION_MAGNITUDE: f64 = 0.015;
 const SEPARATION_DELTA: f64 = 10.0;
-//Magnitude of repulsion between all particles
+// Magnitude of repulsion between all particles
 const REPULSION_MAGNITUDE: f64 = 500.0;
-//Edge attraction
+// Edge attraction
 const ATTRACTION_MAGNITUDE: f64 = 0.003;
-//const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
-//const PULL_CENTER_MAGNITUDE: f64 = 0.005;
-//Probability of connecting after node is destroyed
+// const BOT_GRAVITATION_MAGNITUDE: f64 = 0.0;
+// const PULL_CENTER_MAGNITUDE: f64 = 0.005;
+// Probability of connecting after node is destroyed
 const CONNECT_PROBABILITY: f64 = 0.0;
 const CONNECT_AFTER: f64 = 40.0;
 const CONNECT_MAX_LENGTH: f64 = 150.0 * SIZE_FACTOR;
-//const CONNECT_MIN_LENGTH: f64 = 10.0;
-//The length within which bots can connect their nodes together by choice
+// const CONNECT_MIN_LENGTH: f64 = 10.0;
+// The length within which bots can connect their nodes together by choice
 const BOT_CHOICE_CONNECT_LENGTH: f64 = 50000.0;
 const BOT_PULL_MAGNITUDE: f64 = 150.0;
 const BOT_PULL_RADIUS: f64 = 200.0;
@@ -44,17 +44,17 @@ const MOVE_SPEED: f32 = 5.0;
 const ROTATION_RATE: f32 = 0.005;
 
 const START_SPAWNING_AT: i64 = 50000;
-//Energy stops being generated after this many nodes exist
+// Energy stops being generated after this many nodes exist
 const ENERGY_CUTOFF_AT: usize = 100;
-const SPAWN_RATE: f64 = 1.0/(START_SPAWNING_AT as f64);
+const SPAWN_RATE: f64 = 1.0 / (START_SPAWNING_AT as f64);
 const NODE_STARTING_ENERGY: i64 = 200000;
-//const FINAL_SPAWN_CYCLE: u64 = 0;
+// const FINAL_SPAWN_CYCLE: u64 = 0;
 const NEW_NODE_SPAWNS: usize = 0;
-//Cycle mutation rate; always mutates on division either way
+// Cycle mutation rate; always mutates on division either way
 const MUTATION_RATE: f64 = 0.000001;
-//The rate at which a bot will be spawned in empty nodes when the mesh is full
+// The rate at which a bot will be spawned in empty nodes when the mesh is full
 const EMPTY_NODE_FULL_MESH_SPAWN_RATE: f64 = 0.005;
-//Minimum channel magnitude to connect
+// Minimum channel magnitude to connect
 const CONNECT_SIGNAL_MIN: i64 = 16;
 
 const EDGE_FALLOFF: f32 = 0.05;
@@ -63,13 +63,13 @@ const NODE_FALLOFF: f32 = 0.25;
 const SIGMOID_DECOMPRESSION: f64 = 4294967296.0;
 const FORCE_INPUT_SCALAR: f64 = 4294967296.0;
 
-pub const NODE_SPACE: zoom::Box<Vec3> = zoom::Box{
-    origin: Vec3{
+pub const NODE_SPACE: zoom::Box<Vec3> = zoom::Box {
+    origin: Vec3 {
         x: 0.0,
         y: 0.0,
         z: 0.0,
     },
-    offset: Vec3{
+    offset: Vec3 {
         x: 300.0 * SIZE_FACTOR,
         y: 300.0 * SIZE_FACTOR,
         z: 300.0 * SIZE_FACTOR,
@@ -82,7 +82,7 @@ fn comp_delta(ps: (Vec3, Vec3)) -> Vec3 {
 }
 
 fn sig(v: i64) -> f64 {
-    (1.0/(1.0 + (v as f64 / SIGMOID_DECOMPRESSION).exp()) - 0.5)
+    (1.0 / (1.0 + (v as f64 / SIGMOID_DECOMPRESSION).exp()) - 0.5)
 }
 
 mod bot;
@@ -94,7 +94,7 @@ use rank::*;
 
 fn vec_to_spos(v: Vec3) -> [f32; 3] {
     match v {
-        Vec3{x, y, z} => [x as f32, y as f32, z as f32]
+        Vec3 { x, y, z } => [x as f32, y as f32, z as f32],
     }
 }
 
@@ -103,32 +103,33 @@ fn main() {
     use rand::{SeedableRng, Rng};
     let mut rng = rand::Isaac64Rng::from_seed(&SEED);
 
-    let display = glium::glutin::WindowBuilder::new().with_vsync()
-    .with_fullscreen(glium::glutin::get_available_monitors().next().unwrap())
-    .build_glium().unwrap();
+    let display = glium::glutin::WindowBuilder::new()
+        .with_vsync()
+        .with_fullscreen(glium::glutin::get_available_monitors().next().unwrap())
+        .build_glium()
+        .unwrap();
     let window = display.get_window().unwrap();
-    /*match window.set_cursor_state(glium::glutin::CursorState::Hide) {
-        Ok(_) => {},
-        Err(_) => println!("Cursor hide not available on this platform; starting without it."),
-    }*/
+    // match window.set_cursor_state(glium::glutin::CursorState::Hide) {
+    // Ok(_) => {},
+    // Err(_) => println!("Cursor hide not available on this platform; starting without it."),
+    // }
     let glowy = gg::Renderer::new(&display);
     let mut focus_state = true;
 
-    let mut deps: petgraph::Graph<Node, (), petgraph::Undirected> = petgraph::Graph::new_undirected();
+    let mut deps: petgraph::Graph<Node, (), petgraph::Undirected> =
+        petgraph::Graph::new_undirected();
 
     let mut print_info = false;
 
-    //Set mouse cursor to middle
+    // Set mouse cursor to middle
     {
         let (dimx, dimy) = display.get_framebuffer_dimensions();
-        let (hdimx, hdimy) = (dimx/2, dimy/2);
+        let (hdimx, hdimy) = (dimx / 2, dimy / 2);
         window.set_cursor_position(hdimx as i32, hdimy as i32).ok().unwrap();
     }
 
-    let mut movement = na::Iso3::<f32>::new(
-        na::Vec3::new(0.0, 0.0, STARTING_POSITION),
-        na::Vec3::new(0.0, 0.0, 0.0),
-    );
+    let mut movement = na::Iso3::<f32>::new(na::Vec3::new(0.0, 0.0, STARTING_POSITION),
+                                            na::Vec3::new(0.0, 0.0, 0.0));
 
     let mut upstate = glium::glutin::ElementState::Released;
     let mut dnstate = glium::glutin::ElementState::Released;
@@ -146,37 +147,40 @@ fn main() {
 
         let mut closed = false;
 
-        let node_vec = deps.node_weights_mut().map(|n|
-            gg::Node{
-                position: vec_to_spos(n.particle.p.position),
-                color: n.color(),
-                falloff: NODE_FALLOFF,
-                radius: n.radius(),
-            }
-        ).collect_vec();
+        let node_vec = deps.node_weights_mut()
+            .map(|n| {
+                gg::Node {
+                    position: vec_to_spos(n.particle.p.position),
+                    color: n.color(),
+                    falloff: NODE_FALLOFF,
+                    radius: n.radius(),
+                }
+            })
+            .collect_vec();
 
-        let edge_vec = deps.edge_indices().map(|e| deps.edge_endpoints(e)).fold(Vec::new(), |mut v, n| {
-            use zoom::Toroid;
-            let indices = n.unwrap().clone();
-            let nodes = (deps.node_weight(indices.0).unwrap(), deps.node_weight(indices.1).unwrap());
-            let rdelta = nodes.1.particle.p.position - nodes.0.particle.p.position;
-            if rdelta == NODE_SPACE.wrap_delta(rdelta) {
-                v.push(gg::Node{
-                    position: vec_to_spos(nodes.0.particle.p.position),
-                    color: nodes.0.color(),
-                    falloff: EDGE_FALLOFF,
-                    radius: nodes.0.radius(),
-                });
-                v.push(gg::Node{
-                    position: vec_to_spos(nodes.1.particle.p.position),
-                    color: nodes.1.color(),
-                    falloff: EDGE_FALLOFF,
-                    radius: nodes.1.radius(),
-                });
-            }
-            v
-        }
-        );
+        let edge_vec =
+            deps.edge_indices().map(|e| deps.edge_endpoints(e)).fold(Vec::new(), |mut v, n| {
+                use zoom::Toroid;
+                let indices = n.unwrap().clone();
+                let nodes = (deps.node_weight(indices.0).unwrap(),
+                             deps.node_weight(indices.1).unwrap());
+                let rdelta = nodes.1.particle.p.position - nodes.0.particle.p.position;
+                if rdelta == NODE_SPACE.wrap_delta(rdelta) {
+                    v.push(gg::Node {
+                        position: vec_to_spos(nodes.0.particle.p.position),
+                        color: nodes.0.color(),
+                        falloff: EDGE_FALLOFF,
+                        radius: nodes.0.radius(),
+                    });
+                    v.push(gg::Node {
+                        position: vec_to_spos(nodes.1.particle.p.position),
+                        color: nodes.1.color(),
+                        falloff: EDGE_FALLOFF,
+                        radius: nodes.1.radius(),
+                    });
+                }
+                v
+            });
 
         let deps = &mut deps;
         let period = &mut period;
@@ -673,68 +677,88 @@ fn main() {
                 *period += 1;
             });
 
-            { //Render code
+            {
+                // Render code
                 let mut target = display.draw();
                 target.clear_color(0.0, 0.0, 0.0, 1.0);
 
                 let matr = movement.to_homogeneous() * 3.0;
 
-                //Update perspective every frame
+                // Update perspective every frame
                 let fbdim = window.get_inner_size_pixels().unwrap();
-                let perspective = *na::Persp3::new((fbdim.0 as f32)/(fbdim.1 as f32),
-                    1.0, 0.0, 500.0).to_mat().as_ref();
+                let perspective =
+                    *na::Persp3::new((fbdim.0 as f32) / (fbdim.1 as f32), 1.0, 0.0, 500.0)
+                        .to_mat()
+                        .as_ref();
 
-                //Render nodes
+                // Render nodes
                 glowy.render_nodes(&mut target, matr.as_ref(), &perspective, &node_vec[..]);
 
-                //Render edges
+                // Render edges
                 glowy.render_edges(&mut target, matr.as_ref(), &perspective, &edge_vec[..]);
 
                 target.finish().unwrap();
             }
 
-            //Render to disk
+            // Render to disk
             {
-                //let pixels: Vec<Vec<(u8, u8, u8, u8)>> = display.read_front_buffer();
+                // let pixels: Vec<Vec<(u8, u8, u8, u8)>> = display.read_front_buffer();
             }
 
             for ev in display.poll_events() {
                 match ev {
                     glium::glutin::Event::Closed => closed = true,
-                    glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::M)) => {
+                    glium::glutin::Event::KeyboardInput(state,
+                                                        _,
+                                                        Some(glium::glutin::VirtualKeyCode::M)) => {
                         print_info = state == glium::glutin::ElementState::Pressed;
-                    },
-                    glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::W)) => {
+                    }
+                    glium::glutin::Event::KeyboardInput(state,
+                                                        _,
+                                                        Some(glium::glutin::VirtualKeyCode::W)) => {
                         fdstate = state;
-                    },
-                    glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::S)) => {
+                    }
+                    glium::glutin::Event::KeyboardInput(state,
+                                                        _,
+                                                        Some(glium::glutin::VirtualKeyCode::S)) => {
                         bkstate = state;
-                    },
-                    glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::A)) => {
+                    }
+                    glium::glutin::Event::KeyboardInput(state,
+                                                        _,
+                                                        Some(glium::glutin::VirtualKeyCode::A)) => {
                         ltstate = state;
-                    },
-                    glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::D)) => {
+                    }
+                    glium::glutin::Event::KeyboardInput(state,
+                                                        _,
+                                                        Some(glium::glutin::VirtualKeyCode::D)) => {
                         rtstate = state;
-                    },
-                    glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::Q)) => {
+                    }
+                    glium::glutin::Event::KeyboardInput(state,
+                                                        _,
+                                                        Some(glium::glutin::VirtualKeyCode::Q)) => {
                         dnstate = state;
-                    },
-                    glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::E)) => {
+                    }
+                    glium::glutin::Event::KeyboardInput(state,
+                                                        _,
+                                                        Some(glium::glutin::VirtualKeyCode::E)) => {
                         upstate = state;
-                    },
+                    }
                     glium::glutin::Event::MouseMoved(x, y) => {
                         let (dimx, dimy) = display.get_framebuffer_dimensions();
-                        let (hdimx, hdimy) = (dimx/2, dimy/2);
+                        let (hdimx, hdimy) = (dimx / 2, dimy / 2);
                         if focus_state {
-                            movement.append_rotation_mut(&na::Vec3::new(-(y - hdimy as i32) as f32 * ROTATION_RATE,
-                                (x - hdimx as i32) as f32 * ROTATION_RATE, 0.0));
+                            movement.append_rotation_mut(&na::Vec3::new(-(y - hdimy as i32) as f32 *
+                                                                    ROTATION_RATE,
+                                                                    (x - hdimx as i32) as f32 *
+                                                                    ROTATION_RATE,
+                                                                    0.0));
                             window.set_cursor_position(hdimx as i32, hdimy as i32).ok().unwrap();
                         }
-                    },
+                    }
                     glium::glutin::Event::Focused(s) => {
                         focus_state = s;
-                    },
-                    _ => ()
+                    }
+                    _ => (),
                 }
             }
 

@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
-///Rank lets us rank multiple objects ignoring the data.
-///The Ord for Rank is backwards so that BinaryHeap becomes a min heap.
+/// Rank lets us rank multiple objects ignoring the data.
+/// The Ord for Rank is backwards so that BinaryHeap becomes a min heap.
 #[derive(Clone, Debug)]
 pub struct Rank<T> {
     pub rank: i64,
