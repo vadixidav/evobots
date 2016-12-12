@@ -8,9 +8,9 @@ rand = "0.3.13"
 itertools = "0.4.8"
 num = "0.1.30"
 zoom = "1.4.0"
-glowygraph = "0.4.0"
+glowygraph = "0.4.2"
 nalgebra = "0.5.1"
 crossbeam = "0.2.5"
-glium = "0.13.5"
+glium = "0.14.0"
 petgraph = "0.2.2"
-mli = {git = "https://github.com/vadixidav/mli"}
+mli = {git = "https://github.com/vadixidav/mli", rev = "97cb5aaa766e99d2dce79c5498d7e60e485cea97"}

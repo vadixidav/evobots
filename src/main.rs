@@ -722,7 +722,7 @@ fn main() {
                     glium::glutin::Event::KeyboardInput(state, _, Some(glium::glutin::VirtualKeyCode::E)) => {
                         upstate = state;
                     },
-                    glium::glutin::Event::MouseMoved((x, y)) => {
+                    glium::glutin::Event::MouseMoved(x, y) => {
                         let (dimx, dimy) = display.get_framebuffer_dimensions();
                         let (hdimx, hdimy) = (dimx/2, dimy/2);
                         if focus_state {
