@@ -226,7 +226,6 @@ impl Bot {
     }
 
     pub fn mate(&mut self, other: &Self, rng: &mut R) -> Self {
-        use mli::Genetic;
         //Divide energy in half when mating for the mater
         self.energy /= 2;
         let mut b = Bot{
@@ -245,7 +244,6 @@ impl Bot {
     }
 
     pub fn divide(&mut self, rng: &mut R) -> Self {
-        use mli::Genetic;
         //Divide energy in half when dividing
         self.energy /= 2;
         let mut b = Bot{
